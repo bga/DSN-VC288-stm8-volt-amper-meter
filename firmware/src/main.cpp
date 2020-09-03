@@ -147,10 +147,10 @@ void initTimer() {
 
 
 struct Display {
-	volatile FU8 displayChars[3 + 3];
-	volatile FU8 currentDisplayIndex = 0;
+	FU8 displayChars[3 + 3];
+	FU8 currentDisplayIndex = 0;
 
-	void init() volatile {
+	void init() {
 		#define initAnode(portLetterArg, bitNoArg) setBit(CONCAT(CONCAT(P, portLetterArg), _DDR), bitNoArg); setBit(CONCAT(CONCAT(P, portLetterArg), _CR1), bitNoArg);
 		#define initCathode(portLetterArg, bitNoArg) setBit(CONCAT(CONCAT(P, portLetterArg), _DDR), bitNoArg); setBit(CONCAT(CONCAT(P, portLetterArg), _ODR), bitNoArg);
 
@@ -176,7 +176,7 @@ struct Display {
 		#undef initCathode
 	}
 
-	void turnOffDisplay() volatile {
+	void turnOffDisplay() {
 		//# do not touch SWIM during debug
 		setBitValue(PD_ODR, digit0Cathode_D, 0);
 		setBitValue(PD_ODR, digit1Cathode_D, 0);
@@ -186,7 +186,7 @@ struct Display {
 		setBitValue(PB_ODR, digit5Cathode_B, 0);
 	}
 
-	void setDigit(FU8 digitIndex, FU8 digitBitsState) volatile {
+	void setDigit(FU8 digitIndex, FU8 digitBitsState) {
 		this->turnOffDisplay();
 
 //	setBitMaskedValues(PD_DDR, digit0CathodeD, bitsCountToMask(2), digitBitsState >> 0);
@@ -225,7 +225,7 @@ struct Display {
 		}
 	}
 
-	void update() volatile {
+	void update() {
 		this->setDigit(this->currentDisplayIndex, this->displayChars[this->currentDisplayIndex]);
 		this->currentDisplayIndex += 1;
 		if(this->currentDisplayIndex == 6) this->currentDisplayIndex = 0;
@@ -233,7 +233,7 @@ struct Display {
 
 };
 
-volatile Display display;
+Display display;
 //Display display;
 
 #if 0
