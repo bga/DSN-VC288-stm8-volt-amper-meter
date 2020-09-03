@@ -40,21 +40,22 @@ ISR(TIM4_ISR) {
 #endif //# __ICCSTM8__
 
 enum {
-	digit0AnodeD = 5,
-	digit1AnodeD = 6,
-	digit2AnodeD = 4,
-	digit3AnodeA = 1,
-	digit4AnodeB = 4,
-	digit2AnodeB = 5,
+	digit0Cathode_D = 5,
+	digit1Cathode_D = 6,
+	digit2Cathode_D = 4,
+	digit3Cathode_A = 1,
+	digit4Cathode_B = 4,
+	digit5Cathode_B = 5,
 };
 enum {
-	digit0CathodeD = 3,
-	digit1CathodeD = 4,
-	digit2CathodeC = 3,
-	digit3CathodeC = 6,
-	digit4CathodeC = 7,
-	digit5CathodeA = 1,
-	digit6CathodeA = 2,
+	digit0Anode_C = 6,
+	digit1Anode_C = 7,
+	digit2Anode_C = 3,
+	digit3Anode_C = 4,
+	digit4Anode_A = 3,
+	digit5Anode_A = 2,
+	digit6Anode_DAndSwim = 1,
+	digitDotAnode_C = 5,
 };
 
 enum {
@@ -146,49 +147,43 @@ void initTimer() {
 
 
 struct Display {
-	volatile FU8 displayChars[2][3];
-	volatile FU8 currentDisplayIndex;
+	volatile FU8 displayChars[3 + 3];
+	volatile FU8 currentDisplayIndex = 0;
 
 	void init() volatile {
-		PA_DDR |= _BV(digit1AnodeD)
+		#define initAnode(portLetterArg, bitNoArg) setBit(CONCAT(CONCAT(P, portLetterArg), _DDR), bitNoArg); setBit(CONCAT(CONCAT(P, portLetterArg), _CR1), bitNoArg);
+		#define initCathode(portLetterArg, bitNoArg) setBit(CONCAT(CONCAT(P, portLetterArg), _DDR), bitNoArg); setBit(CONCAT(CONCAT(P, portLetterArg), _ODR), bitNoArg);
+
+		initCathode(D, digit0Cathode_D);
+		initCathode(D, digit1Cathode_D);
+		initCathode(D, digit2Cathode_D);
+		initCathode(A, digit3Cathode_A);
+		initCathode(B, digit4Cathode_B);
+		initCathode(B, digit5Cathode_B);
+
+		initAnode(C, digit0Anode_C);
+		initAnode(C, digit1Anode_C);
+		initAnode(C, digit2Anode_C);
+		initAnode(C, digit3Anode_C);
+		initAnode(A, digit4Anode_A);
+		initAnode(A, digit5Anode_A);
 		#if NDEBUG
-		| _BV(digit0AnodeD)
+			initAnode(D, digit6Anode_DAndSwim);
 		#endif // NDEBUG
-		;
-		PC_DDR |= _BV(digit2AnodeD);
+		initAnode(C, digitDotAnode_C);
 
-		PA_CR1 |= _BV(digit1AnodeD)
-		#if NDEBUG
-		| _BV(digit0AnodeD)
-		#endif // NDEBUG
-		;
-		PC_CR1 |= _BV(digit2AnodeD);
-
-		setBit(PD_DDR, digit0CathodeD);
-		setBit(PD_DDR, digit1CathodeD);
-		setBit(PC_DDR, digit2CathodeC);
-		setBit(PC_DDR, digit3CathodeC);
-		setBit(PC_DDR, digit4CathodeC);
-		setBit(PA_DDR, digit5CathodeA);
-		setBit(PA_DDR, digit6CathodeA);
-
-		setBit(PD_ODR, digit0CathodeD);
-		setBit(PD_ODR, digit1CathodeD);
-		setBit(PC_ODR, digit2CathodeC);
-		setBit(PC_ODR, digit3CathodeC);
-		setBit(PC_ODR, digit4CathodeC);
-		setBit(PA_ODR, digit5CathodeA);
-		setBit(PA_ODR, digit6CathodeA);
-
+		#undef initAnode
+		#undef initCathode
 	}
 
 	void turnOffDisplay() volatile {
 		//# do not touch SWIM during debug
-		#if NDEBUG
-			setBitValue(PD_ODR, digit0AnodeD, 0);
-		#endif
-		setBitValue(PA_ODR, digit1AnodeD, 0);
-		setBitValue(PC_ODR, digit2AnodeD, 0);
+		setBitValue(PD_ODR, digit0Cathode_D, 0);
+		setBitValue(PD_ODR, digit1Cathode_D, 0);
+		setBitValue(PD_ODR, digit2Cathode_D, 0);
+		setBitValue(PA_ODR, digit3Cathode_A, 0);
+		setBitValue(PB_ODR, digit4Cathode_B, 0);
+		setBitValue(PB_ODR, digit5Cathode_B, 0);
 	}
 
 	void setDigit(FU8 digitIndex, FU8 digitBitsState) volatile {
@@ -199,27 +194,41 @@ struct Display {
 //	setBitMaskedValues(PC_DDR, digit3CathodeC, bitsCountToMask(2), digitBitsState >> 3);
 //	setBitMaskedValues(PA_DDR, digit5CathodeA, bitsCountToMask(3), digitBitsState >> 5);
 
-		digitBitsState = ~digitBitsState;
-		setBitMaskedValues(PD_ODR, digit0CathodeD, bitsCountToMask(2), digitBitsState >> 0);
-		setBitValue(PC_ODR, digit2CathodeC, (digitBitsState >> 2) & 1);
-		setBitMaskedValues(PC_ODR, digit3CathodeC, bitsCountToMask(2), digitBitsState >> 3);
-		setBitMaskedValues(PA_ODR, digit5CathodeA, bitsCountToMask(2), digitBitsState >> 5);
+//		digitBitsState = ~digitBitsState;
+		#if 1
+		setBitValue(PC_ODR, digit0Anode_C, hasBit(digitBitsState, 0));
+		setBitValue(PC_ODR, digit1Anode_C, hasBit(digitBitsState, 1));
+		setBitValue(PC_ODR, digit2Anode_C, hasBit(digitBitsState, 2));
+		setBitValue(PC_ODR, digit3Anode_C, hasBit(digitBitsState, 3));
+		setBitValue(PA_ODR, digit4Anode_A, hasBit(digitBitsState, 4));
+		setBitValue(PA_ODR, digit5Anode_A, hasBit(digitBitsState, 5));
+		// do not touch SWIM during debug
+		#if NDEBUG
+			setBitValue(PD_ODR, digit6Anode_DAndSwim, hasBit(digitBitsState, 6));
+		#endif
+		setBitValue(PC_ODR, digitDotAnode_C, hasBit(digitBitsState, 7));
 
+		#else
+		setBitMaskedValues(PD_ODR, digit0Anode_C, bitsCountToMask(2), digitBitsState >> 0);
+		setBitValue(PC_ODR, digit2Anode_C, (digitBitsState >> 2) & 1);
+		setBitMaskedValues(PC_ODR, digit4Anode_A, bitsCountToMask(2), digitBitsState >> 3);
+		setBitMaskedValues(PA_ODR, digit3Anode_C, bitsCountToMask(2), digitBitsState >> 5);
+		#endif // 1
 
 		switch(digitIndex) {
-			// do not touch SWIM during debug
-			case(0): setBitValue(PC_ODR, digit2AnodeD, 1); break;
-			#if NDEBUG
-				case(1): setBitValue(PD_ODR, digit0AnodeD, 1); break;
-			#endif
-			case(2): setBitValue(PA_ODR, digit1AnodeD, 1); break;
+			case(0): setBitValue(PD_ODR, digit0Cathode_D, 1); break;
+			case(1): setBitValue(PD_ODR, digit1Cathode_D, 1); break;
+			case(2): setBitValue(PD_ODR, digit2Cathode_D, 1); break;
+			case(3): setBitValue(PA_ODR, digit3Cathode_A, 1); break;
+			case(4): setBitValue(PB_ODR, digit4Cathode_B, 1); break;
+			case(5): setBitValue(PB_ODR, digit5Cathode_B, 1); break;
 		}
 	}
 
 	void update() volatile {
-		this->setDigit(this->currentDisplayIndex, this->displayChars[0][this->currentDisplayIndex]);
+		this->setDigit(this->currentDisplayIndex, this->displayChars[this->currentDisplayIndex]);
 		this->currentDisplayIndex += 1;
-		if(this->currentDisplayIndex == 3) this->currentDisplayIndex = 0;
+		if(this->currentDisplayIndex == 6) this->currentDisplayIndex = 0;
 	}
 
 };
