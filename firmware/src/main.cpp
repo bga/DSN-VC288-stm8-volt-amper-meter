@@ -40,12 +40,12 @@ ISR(TIM4_ISR) {
 #endif //# __ICCSTM8__
 
 enum {
-	digit0Cathode_D = 5,
+	digit2Cathode_D = 5,
 	digit1Cathode_D = 6,
-	digit2Cathode_D = 4,
-	digit3Cathode_A = 1,
+	digit0Cathode_D = 4,
+	digit5Cathode_A = 1,
 	digit4Cathode_B = 4,
-	digit5Cathode_B = 5,
+	digit3Cathode_B = 5,
 };
 enum {
 	digit0Anode_C = 6,
@@ -148,7 +148,7 @@ void initTimer() {
 
 struct Display {
 	FU8 displayChars[3 + 3];
-	FU8 currentDisplayIndex = 0;
+	FU8 currentDisplayIndex;
 
 	void init() {
 		#define initAnode(portLetterArg, bitNoArg) setBit(CONCAT(CONCAT(P, portLetterArg), _DDR), bitNoArg); setBit(CONCAT(CONCAT(P, portLetterArg), _CR1), bitNoArg);
@@ -157,9 +157,9 @@ struct Display {
 		initCathode(D, digit0Cathode_D);
 		initCathode(D, digit1Cathode_D);
 		initCathode(D, digit2Cathode_D);
-		initCathode(A, digit3Cathode_A);
+		initCathode(B, digit3Cathode_B);
 		initCathode(B, digit4Cathode_B);
-		initCathode(B, digit5Cathode_B);
+		initCathode(A, digit5Cathode_A);
 
 		initAnode(C, digit0Anode_C);
 		initAnode(C, digit1Anode_C);
@@ -178,12 +178,12 @@ struct Display {
 
 	void turnOffDisplay() {
 		//# do not touch SWIM during debug
-		setBitValue(PD_ODR, digit0Cathode_D, 0);
-		setBitValue(PD_ODR, digit1Cathode_D, 0);
-		setBitValue(PD_ODR, digit2Cathode_D, 0);
-		setBitValue(PA_ODR, digit3Cathode_A, 0);
-		setBitValue(PB_ODR, digit4Cathode_B, 0);
-		setBitValue(PB_ODR, digit5Cathode_B, 0);
+		setBitValue(PD_ODR, digit0Cathode_D, 1);
+		setBitValue(PD_ODR, digit1Cathode_D, 1);
+		setBitValue(PD_ODR, digit2Cathode_D, 1);
+		setBitValue(PA_ODR, digit5Cathode_A, 1);
+		setBitValue(PB_ODR, digit4Cathode_B, 1);
+		setBitValue(PB_ODR, digit3Cathode_B, 1);
 	}
 
 	void setDigit(FU8 digitIndex, FU8 digitBitsState) {
@@ -216,12 +216,12 @@ struct Display {
 		#endif // 1
 
 		switch(digitIndex) {
-			case(0): setBitValue(PD_ODR, digit0Cathode_D, 1); break;
-			case(1): setBitValue(PD_ODR, digit1Cathode_D, 1); break;
-			case(2): setBitValue(PD_ODR, digit2Cathode_D, 1); break;
-			case(3): setBitValue(PA_ODR, digit3Cathode_A, 1); break;
-			case(4): setBitValue(PB_ODR, digit4Cathode_B, 1); break;
-			case(5): setBitValue(PB_ODR, digit5Cathode_B, 1); break;
+			case(0): setBitValue(PD_ODR, digit0Cathode_D, 0); break;
+			case(1): setBitValue(PD_ODR, digit1Cathode_D, 0); break;
+			case(2): setBitValue(PD_ODR, digit2Cathode_D, 0); break;
+			case(3): setBitValue(PB_ODR, digit3Cathode_B, 0); break;
+			case(4): setBitValue(PB_ODR, digit4Cathode_B, 0); break;
+			case(5): setBitValue(PA_ODR, digit5Cathode_A, 0); break;
 		}
 	}
 
@@ -234,531 +234,8 @@ struct Display {
 };
 
 Display display;
-//Display display;
 
 #if 0
-//# ADC + buttons
-void testAdc() {
-	display.init();
-	initAdc();
-	//# pullup
-	setBitValue(PC_CR1, voltageAdcPortD, 1);
-
-	while (1) {
-		ADC_setChannel(voltageAdcChannelNo);
-		U16 buttonsAdc = ADC_read();
-		FU8 buttonNo = 9;
-		if(0) {  }
-		else if(buttonsAdc < button0Threshold) {
-			buttonNo = 0;
-		}
-		else if(buttonsAdc < button1Threshold) {
-			buttonNo = 1;
-		}
-		else if(buttonsAdc < button2Threshold) {
-			buttonNo = 2;
-		}
-		else if(buttonsAdc < button3Threshold) {
-			buttonNo = 3;
-		}
-		display.setDigit(2, _7SegmentsFont::digits[buttonNo]);
-		delay_ms(50);
-	}
-}
-#endif // 0
-
-#if 0
-ISR(EXTI2_ISR) {
-
-	//# debounce
-	delay(2);
-
-	ADC_setChannel(voltageAdcChannelNo);
-	U16 buttonsAdc = ADC_read();
-	ADC_setChannel(currentAdcChannelNo);
-	FU8 buttonNo = 9;
-	if(0) {  }
-	else if(buttonsAdc < button0Threshold) {
-		buttonNo = 0;
-	}
-	else if(buttonsAdc < button1Threshold) {
-		buttonNo = 1;
-	}
-	else if(buttonsAdc < button2Threshold) {
-		buttonNo = 2;
-	}
-	else if(buttonsAdc < button3Threshold) {
-		buttonNo = 3;
-	}
-	display.setDigit(2, _7SegmentsFont::digits[buttonNo]);
-}
-
-//# ADC + buttons
-void testAdcInterrupt() {
-	display.init();
-	initAdc();
-
-	//# enable interrupt
-	setBitValue(PC_CR2, voltageAdcPortD, 1);
-
-	//# PORTC interrupt to rising and falling edge
-	setBitMaskedValues(EXTI_CR1, 4, bitsCountToMask(2), 3);
-//	EXTI_CR1_PDIS = 3;
-
-	enable_interrupts();
-	while (1) {
-		delay(500);
-		delay(500);
-
-//		__wait_for_interrupt();
-	}
-}
-#endif // 0
-
-#if 0
-volatile FU16 ticksCount = 0;
-volatile FU8 buttonsDebounceCountdown = 0;
-
-ISR(TIM4_ISR) {
-	clearBit(TIM4_SR, TIM4_SR_UIF);
-
-	ticksCount += 1;
-	if(buttonsDebounceCountdown != 0) buttonsDebounceCountdown -= 1;
-}
-
-
-ISR(EXTI2_ISR) {
-	buttonsDebounceCountdown = buttonsDebounceCountdownMax;
-}
-
-//# ADC + buttons
-void testAdcInterruptAndTimer() {
-	display.init();
-	initAdc();
-	initTimer();
-
-	//# enable interrupt
-	setBitValue(PC_CR2, voltageAdcPortD, 1);
-
-	//# PORTC interrupt to rising and falling edge
-	setBitMaskedValues(EXTI_CR1, 4, bitsCountToMask(2), 3);
-//	EXTI_CR1_PDIS = 3;
-
-	enable_interrupts();
-	while (1) {
-		if(buttonsDebounceCountdown == 1) {
-			ADC_setChannel(voltageAdcChannelNo);
-			U16 buttonsAdc = ADC_read();
-			ADC_setChannel(currentAdcChannelNo);
-			FU8 buttonNo = 9;
-			if(0) {  }
-			else if(buttonsAdc < button0Threshold) {
-				buttonNo = 0;
-			}
-			else if(buttonsAdc < button1Threshold) {
-				buttonNo = 1;
-			}
-			else if(buttonsAdc < button2Threshold) {
-				buttonNo = 2;
-			}
-			else if(buttonsAdc < button3Threshold) {
-				buttonNo = 3;
-			}
-			display.setDigit(2, _7SegmentsFont::digits[buttonNo]);
-		}
-		else {
-
-		}
-
-	}
-}
-#endif // 0
-
-#if 1
-volatile TicksCount liveTicksCount = 0;
-volatile FU16 liveSecsCount = 0;
-TicksCount ticksCount = 0;
-FU16 secsCount = 0;
-ISR(TIM4_ISR) {
-	clearBit(TIM4_SR, TIM4_SR_UIF);
-
-	liveTicksCount += 1;
-	//TODO extra * 16
-	if((liveTicksCount & bitsCountToMask(9 + 4)) == 0) {
-		liveSecsCount += 1;
-	}
-}
-
-volatile FU8 buttonsDebounceCountdown = 0;
-ISR(EXTI2_ISR) {
-	buttonsDebounceCountdown = buttonsDebounceCountdownMax;
-}
-
-
-TicksCount getTicksCount() {
-	return ticksCount;
-}
-
-namespace UI {
-	FU16 programNo = 0;
-	FU16 programStartSecsCount;
-	FU16 programSecsTime = 100;
-
-	enum { programListSize = 128 };
-
-	#if 1
-	typedef FU16 TimeSec;
-	typedef FU16 Temp;
-	struct TempAndTime {
-		enum {
-			tempMultiprier = 2,
-			timeMultiprier = 5,
-		};
-
-		enum {
-			Separator_next = 0,
-			Separator_end = 1,
-		};
-
-		union {
-			struct {
-				U8 markTimeSec;
-				U8 temp;
-			};
-			U16 rawWord;
-		}
-
-		Temp get_temp() {
-			return tempMultiprier * this->temp;
-		}
-		TimeSec get_markTimeSec() {
-			return timeMultiprier * this->markTimeSec;
-		}
-		Bool isSeparator() {
-			return this->rawWord == Separator_next;
-		}
-		Bool isEnd() {
-			return this->rawWord == Separator_end;
-		}
-	};
-	#elif 1
-	struct TempAndTime {
-
-//		#pragma pack(push, 1)
-		union {
-			struct {
-				struct {
-					unsigned int markTimeSec: 15;
-					unsigned int temp: 9;
-				};
-				unsigned short _2bytes;
-			};
-			U8 bytes[3];
-		};
-//		#pragma pack(pop)
-		Temp get_temp() {
-			return this->temp;
-		}
-		TimeSec get_markTimeSec() {
-			return this->markTimeSec;
-		}
-		Bool isSeparator() {
-			return this->_2bytes == 0;
-		}
-	};
-	#endif // 1
-
-
-
-	typedef FU8 ProgramListIndex;
-	struct UserData {
-		FU8 lastProgramNo;
-
-		TempAndTime programsFlatList[programListSize];
-	};
-
-	UserData userData;
-
-	ProgramListIndex seekPrevProgramIndex(ProgramListIndex i) {
-		while(0 <= i && !userData.programsFlatList[i].isSeparator()) {
-			i -= 1;
-		}
-		return i;
-	}
-	ProgramListIndex seekNextProgramIndex(ProgramListIndex i) {
-		while(i < programListSize && !userData.programsFlatList[i].isSeparator()) {
-			i += 1;
-		}
-		return i;
-	}
-	Bool isProgramListEnd(ProgramListIndex i) {
-		return userData.programsFlatList[i].isEnd();
-	}
-
-	ProgramListIndex currentProgramStartIndex;
-	ProgramListIndex currentProgramIndex;
-
-	enum Mode {
-		Mode_programChoose = 0,
-		Mode_start = 1,
-		Mode_menu = 2,
-	} mode = Mode_programChoose;
-
-	struct PressDelayPressRepeatConfig {
-		enum {
-			multiPressDelay = msToTicksCount(1000UL),
-			multiPressStep = msToTicksCount(500UL)
-		};
-	};
-	struct UpButton: ButtonManager::PressDelayPressRepeat<PressDelayPressRepeatConfig> {
-		void onPress() override {
-			if(mode == Mode_programChoose) {
-				if(!isProgramListEnd()) {
-					programNo += 1;
-					currentProgramIndex = seekNextProgramIndex(currentProgramIndex);
-				}
-			}
-			else {
-
-			}
-
-		}
-	} upButton;
-	struct DownButton: ButtonManager::PressDelayPressRepeat<PressDelayPressRepeatConfig> {
-		void onPress() override {
-			if(mode == Mode_programChoose) {
-				programNo -= 1;
-			}
-			else {
-
-			}
-		}
-	} downButton;
-
-	struct PressDelayLongPressConfig {
-		enum {
-			longPressDelay = msToTicksCount(3000UL)
-		};
-	};
-	struct StartButton: ButtonManager::PressDelayLongPress<PressDelayLongPressConfig> {
-		void onPress() override {
-			if(mode == Mode_start) {
-				mode = Mode_programChoose;
-			}
-			else if(mode == Mode_programChoose) {
-				mode = Mode_start;
-				programStartSecsCount = secsCount;
-			}
-		}
-		void onLongPress() override {
-
-		}
-	} startButton;
-	struct MunuButton: ButtonManager::PressDelayLongPress<PressDelayLongPressConfig> {
-		void onPress() override {
-//			programNo -= 1;
-		}
-		void onLongPress() override {
-
-		}
-	} menuButton;
-
-	ButtonManager::Base *buttons[] = { &downButton, &upButton, &startButton, &menuButton };
-
-		void displayDigit(FU16 x) {
-		for(int i = 3; i--;) {
-			display.displayChars[0][i] = _7SegmentsFont::digits[divmod10(&x)];
-		}
-	}
-
-	void displayProgramNo() {
-		displayDigit(programNo);
-		display.displayChars[0][0] = _7SegmentsFont::P;
-	}
-	void displayProgramChoose() {
-		displayProgramNo();
-	}
-	void displayStart() {
-		//# display prorgam' no
-		if(upButton.isHold()) {
-			displayProgramNo();
-		}
-		//# display current temp
-		else if(downButton.isHold()) {
-			displayDigit(getCurrentTemp());
-		}
-		//# display prorgam' countdown
-		else {
-			displayDigit(programSecsTime -  (secsCount - programStartSecsCount));
-		}
-	}
-	void displayMenu() {
-
-	}
-
-	typedef void (*DisplayFn)();
-
-	DisplayFn displayFns[] = { &displayProgramChoose, &displayStart, &displayMenu };
-
-	void displayAll() {
-		displayFns[mode]();
-	}
-};
-
-//# ADC + buttons
-void testAdcInterruptAndTimer() {
-	display.init();
-	initAdc();
-	initTimer();
-
-	//# enable interrupt
-	setBitValue(PC_CR2, voltageAdcPortD, 1);
-
-	//# PORTC interrupt to rising and falling edge
-	setBitMaskedValues(EXTI_CR1, 4, bitsCountToMask(2), 3);
-//	EXTI_CR1_PDIS = 3;
-
-	FU8 activeButtonNo = 0;
-
-	enable_interrupts();
-	loop {
-		//# run each tick
-		wait(ticksCount == liveTicksCount);
-		//# fix time
-		ticksCount = liveTicksCount;
-		secsCount = liveSecsCount;
-
-		forInc(FU8, i, 0, arraySize(UI::buttons)) {
-			UI::buttons[i]->timerThread();
-		}
-//		display.setDigit(2, _7SegmentsFont::digits[UI::programNo % 10]);
-//		display.displayChars[2] =  _7SegmentsFont::digits[UI::programNo % 10];
-		UI::displayAll();
-		display.update();
-
-		//# buttons
-		block {
-			if(buttonsDebounceCountdown != 0) {
-				buttonsDebounceCountdown -= 1;
-			}
-			else {
-
-			}
-
-			if(buttonsDebounceCountdown == 1) {
-				ADC_setChannel(voltageAdcChannelNo);
-				U16 buttonsAdc = ADC_read();
-				ADC_setChannel(currentAdcChannelNo);
-				FU8 buttonNo = 9;
-				//# release
-				if(adcMaxValue / 2 < buttonsAdc) {
-//					activeButtonNo = 9;
-					UI::buttons[activeButtonNo]->onUp();
-				}
-				//# press
-				else {
-					activeButtonNo = (buttonsAdc + adcStep - adcShift) / adcStep;
-					UI::buttons[activeButtonNo]->onDown();
-				}
-			}
-			else {
-
-			}
-		}
-
-	}
-}
-#endif // 0
-
-
-
-#if 0
-void testDisplay() {
-	display.init();
-
-	FU8 counter = 0;
-	while (1) {
-		setDigit(counter % 3, _7SegmentsFont::digits[counter % 10]);
-		counter += 1;
-		delay_ms(50);
-	}
-}
-#endif // 0
-
-void displayUpdateThread() {
-	if((ticksCount & bitsCountToMask(2)) == 0) {
-		display.update();
-	}
-}
-
-volatile FU16 countDown = 0;
-
-#if 0
-void buttonsThread() {
-	if((ticksCount & bitsCountToMask(10)) == 0) {
-		countDown += 1;
-		FU16 t = countDown;
-		display.displayChars[0][0] = _7SegmentsFont::digits[divmod10(t)];
-		display.displayChars[0][2] = _7SegmentsFont::digits[divmod10(t)];
-		display.displayChars[0][1] = _7SegmentsFont::digits[divmod10(t)];
-	}
-}
-
-ISR(TIM4_ISR) {
-	clearBit(TIM4_SR, TIM4_SR_UIF);
-
-	ticksCount += 1;
-
-	displayUpdateThread();
-	buttonsThread();
-}
-#endif // 0
-
-
-#if 0
-volatile FU16 counter = 0;
-volatile FU16 ticksCount = 0;
-
-ISR(TIM4_ISR) {
-	clearBit(TIM4_SR, TIM4_SR_UIF);
-
-	ticksCount += 1;
-	if(ticksCount & _BV(7)) {
-		setDigit(2, _7SegmentsFont::digits[counter % 10]);
-		counter += 1;
-	}
-	else {
-
-	}
-}
-
-void testTimer() {
-	display.init();
-
-	/* Prescaler = 128 */
-	TIM4_PSCR = B00000111;
-
-	/* Frequency = F_CLK / (2 * prescaler * (1 + ARR))
-	 *           = 2 MHz / (2 * 128 * (1 + 77)) = 100 Hz */
-	TIM4_ARR = 7;
-
-	setBit(TIM4_IER, TIM4_IER_UIE); // Enable Update Interrupt
-	setBit(TIM4_CR1, TIM4_CR1_CEN); // Enable TIM4
-
-	enable_interrupts();
-	while (1) {
-		// do nothing
-	}
-}
-#endif // 1
-
-#if 0
-void main() {
-	testTimer();
-}
-#endif
-
-#if 1
 
 /*
  * Redirect stdout to UART
@@ -791,20 +268,32 @@ void testUart() {
 }
 #endif // 1
 
+void displayDecrimal(FU16 x, FU8* dest) {
+	dest[2] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[1] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
+}
+
 void main() {
-	testUart();
-	#if 0
 	display.init();
-	initTimer();
-
-	display.displayChars[0][0] = _7SegmentsFont::digits[3];
-	display.displayChars[0][1] = _7SegmentsFont::digits[3];
-	display.displayChars[0][2] = _7SegmentsFont::digits[3];
-
-	enable_interrupts();
+	FU16 counter = 0;
+	FU16 ticksCount = 0;
 
 	while(1) {
+		display.update();
+		if(ticksCount & bitsCountToMask(6)) {
+		}
+		else {
+			display.update();
+		}
+
+		if((ticksCount & bitsCountToMask(10)) == 0) {
+			displayDecrimal(counter, &(display.displayChars[0]));
+			displayDecrimal(counter + 1, &(display.displayChars[3]));
+//			display.displayChars[5] = bitRotate(display.displayChars[5], 1);
+			counter += 1;
+		}
+		ticksCount += 1;
 
 	}
-	#endif // 0
 }
