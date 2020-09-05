@@ -16,13 +16,14 @@ namespace _7SegmentsFont {
       4   2
        333
     */
-    s0 = _BV(3),
-    s1 = _BV(0),
+    s0 = _BV(6),
+    s1 = _BV(4),
     s2 = _BV(2),
-    s3 = _BV(5),
-    s4 = _BV(6),
-    s5 = _BV(4),
-    s6 = _BV(1),
+    s3 = _BV(0),
+    s4 = _BV(1),
+    s5 = _BV(3),
+    s6 = _BV(5),
+    dot = _BV(7),
 
     d0 = (s0 | s1 | s2 | s3 | s4 | s5),
     d1 = (s1 | s2),
@@ -50,7 +51,7 @@ namespace _7SegmentsFont {
     L = (s5 | s4 | s3),
     M = (s2 | s4 | s6),
     O = (s2 | s3 | s4 | s6),
-    P = (s0 | s5 | s1 | s6 | s4), 
+    P = (s0 | s5 | s1 | s6 | s4),
     Q = (s0 | s1 | s2 | s5 | s6),
     R = (s0 | s1 | s4 | s5),
     S = (s0 | s5 | s6 | s2 | s3),
@@ -76,9 +77,9 @@ namespace _7SegmentsFont {
     d6,
     d7,
     d8,
-    d9, 
+    d9,
   };
-  
+
   const U8 digitsHex[] = {
     d0,
     d1,
@@ -89,13 +90,13 @@ namespace _7SegmentsFont {
     d6,
     d7,
     d8,
-    d9, 
-    A, 
-    B, 
-    C, 
-    D, 
-    E, 
-    F, 
+    d9,
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
   };
 }
 
