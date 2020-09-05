@@ -10,6 +10,7 @@
 
 #include <!cpp/bitManipulations.h>
 #include <!cpp/Binary_values_8_bit.h>
+#include <!cpp/RunningAvg.h>
 #include <!cpp/newKeywords.h>
 
 typedef FU16 TicksCount;
@@ -22,6 +23,8 @@ TicksCount getTicksCount();
 
 enum { ticksCountPerS = 8 * 256UL };
 #define msToTicksCount(msArg) (ticksCountPerS * (msArg) / 1000UL)
+
+enum { adcMaxBufferSize = 16 };
 
 //#undef clearBit
 //#define clearBit(vArg, bitNumberArg) (__BRES((vArg), (bitNumberArg)), (vArg))
@@ -98,8 +101,12 @@ FU16 divmod10(FU16& in) {
 void ADC_setChannel(FU8 channelNo) {
 	setBitMaskedValues(ADC1_CSR, 0, 0x0F, channelNo);
 }
-FU16 ADC_read() {
+
+void ADC_readStart() {
 	setBit(ADC1_CR1, ADC1_CR1_ADON);
+}
+
+FU16 ADC_read() {
 	while (!(ADC1_CSR & _BV(ADC1_CSR_EOC)));
 	U8 adcL = ADC1_DRL;
 	U8 adcH = ADC1_DRH;
@@ -274,20 +281,52 @@ void displayDecrimal(FU16 x, FU8* dest) {
 	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
 }
 
+typedef FU16 U1_15;
+struct Settings {
+	struct AdcUserFix {
+		U1_15 mul;
+		U1_15 add;
+		FU16 fix(FU16 v) {
+			return (v * this->mul + this->add) >> 15;
+		}
+	};
+
+	AdcUserFix voltageAdcFix;
+	AdcUserFix currentAdcFix;
+};
+
+Settings settings;
+const Settings defaultSettings = { .voltageAdcFix = { .mul = U1_15(1 << 15), .add = 0 } };
+
 void main() {
+	settings = defaultSettings;
+
+	RunningAvg<FU16[adcMaxBufferSize], FU32> voltageAdcRunningAvg;
+	RunningAvg<FU16[adcMaxBufferSize], FU32> currentAdcRunningAvg;
+
 	display.init();
+	initAdc();
 	FU16 counter = 0;
 	FU16 ticksCount = 0;
 
 	while(1) {
-		display.update();
 		if(ticksCount & bitsCountToMask(6)) {
 		}
 		else {
 			display.update();
 		}
 
-		if((ticksCount & bitsCountToMask(10)) == 0) {
+		if((ticksCount & bitsCountToMask(12))) {
+		}
+		else {
+			ADC_setChannel(voltageAdcChannelNo);
+			ADC_readStart();
+			displayDecrimal(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg()), &(display.displayChars[0]));
+			FU16 voltageAdcValue = ADC_read();
+			voltageAdcRunningAvg.add(voltageAdcValue);
+		}
+
+		if(0 && (ticksCount & bitsCountToMask(10)) == 0) {
 			displayDecrimal(counter, &(display.displayChars[0]));
 			displayDecrimal(counter + 1, &(display.displayChars[3]));
 //			display.displayChars[5] = bitRotate(display.displayChars[5], 1);
