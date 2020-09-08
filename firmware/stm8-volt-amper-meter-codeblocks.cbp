@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="firmware_cb" />
+		<Option pch_mode="2" />
+		<Option compiler="cygwin" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/firmware_cb" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="iar_stm8_compiler" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/firmware_cb" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="iar_stm8_compiler" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="../../../!mcu/include/!mcu/UartProcessor_test.cpp" />
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/delay.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/delay.h" />
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/eeprom.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/eeprom.h" />
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/i2c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/i2c.h" />
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/spi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/spi.h" />
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/stm8s.h" />
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/uart.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/uart.h" />
+		<Unit filename="src/FlatList.h" />
+		<Unit filename="src/UI.h" />
+		<Unit filename="src/_7SegmentsFont.h" />
+		<Unit filename="src/main.cpp" />
+		<Extensions>
+			<code_completion>
+				<search_path add="E:\p\!electronics\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min" />
+				<search_path add="E:\p\!electronics\!mcu\include" />
+			</code_completion>
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
