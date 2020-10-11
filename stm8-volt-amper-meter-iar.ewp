@@ -1614,28 +1614,28 @@
     <group>
         <name>stm8s-bare-min</name>
         <file>
-            <name>$PROJ_DIR$\..\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\delay.c</name>
+            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\delay.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\delay.h</name>
+            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\delay.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\eeprom.c</name>
+            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\eeprom.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\eeprom.h</name>
+            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\eeprom.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\i2c.h</name>
+            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\i2c.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\stm8s.h</name>
+            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\stm8s.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\uart.c</name>
+            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\uart.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\uart.h</name>
+            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\uart.h</name>
         </file>
     </group>
 </project>
