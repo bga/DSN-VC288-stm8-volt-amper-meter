@@ -19,39 +19,21 @@
 #include <stdint.h>
 #include <stm8s.h>
 #include <intrinsics.h>
-#include <delay.h>
+#include <eeprom.h>
 
-#define BAUDRATE (9600 / F_CPU_PRESCALER)
-#include <uart.h>
+#ifdef __ICCSTM8__
+  #define EEMEM __eeprom
+#endif //# __ICCSTM8__
 
 #include <!cpp/bitManipulations.h>
 #include <!cpp/Binary_values_8_bit.h>
 #include <!cpp/RunningAvg.h>
 #include <!cpp/newKeywords.h>
 
-typedef FU16 TicksCount;
-TicksCount getTicksCount();
-
-#include <!mcu/ButtonManager.h>
-//#include <!mcu/UartProcessor.h>
-
 #include "_7SegmentsFont.h"
 
-enum { ticksCountPerS = 8 * 256UL };
-#define msToTicksCount(msArg) (ticksCountPerS * (msArg) / 1000UL)
 
-enum { adcMaxBufferSize = 16 };
-
-//#undef clearBit
-//#define clearBit(vArg, bitNumberArg) (__BRES((vArg), (bitNumberArg)), (vArg))
-//#undef setBit
-//#define setBit(vArg, bitNumberArg) (__BSET(&(vArg), (bitNumberArg)), (vArg))
-
-#if 0
-ISR(TIM4_ISR) {
-
-}
-#endif
+enum { adcMaxBufferSize = 32 };
 
 #ifdef __ICCSTM8__
   #define ISR(vectorArg) PRAGMA(vector = vectorArg + 2) \
@@ -114,6 +96,26 @@ FU16 divmod10(FU16& in) {
 }
 #endif // 1
 
+void ADC_init() {
+	/* right-align data */
+	setBit(ADC1_CR2, ADC1_CR2_ALIGN);
+
+	//# ADC clock = fMasterClock / 18
+	setBitMaskedValues(ADC1_CR1, 4, 0x07, 7);
+
+	/* wake ADC from power down */
+	setBit(ADC1_CR1, ADC1_CR1_ADON);
+}
+
+void ADC_initChannel(FU8 channelNo) {
+	if(channelNo < 8) {
+		setBit(ADC2_TDRL, channelNo);
+	}
+	else {
+		setBit(ADC2_TDRH, channelNo - 8);
+	}
+}
+
 void ADC_setChannel(FU8 channelNo) {
 	setBitMaskedValues(ADC1_CSR, 0, 0x0F, channelNo);
 }
@@ -129,45 +131,6 @@ FU16 ADC_read() {
 	clearBit(ADC1_CSR, ADC1_CSR_EOC);
 	return (adcL | (adcH << 8));
 }
-
-void initAdc() {
-	//# disable schmitt trigger
-	setBit(ADC2_TDRL, currentAdcChannelNo);
-
-	/* right-align data */
-	ADC1_CR2 |= _BV(ADC1_CR2_ALIGN);
-
-	/* wake ADC from power down */
-	ADC1_CR1 |= _BV(ADC1_CR1_ADON);
-}
-
-typedef FU16 Temp;
-
-Temp getCurrentTemp() {
-	return 78;
-}
-
-void initTimer() {
-	/* Prescaler = 128 */
-//	TIM4_PSCR = B00000111;
-	TIM4_PSCR = 7;
-
-	enum {
-		prescaler = 128,
-		arr = F_CPU / ticksCountPerS / 2 / prescaler - 1
-	};
-
-	//TODO static_assert for IAR
-	static_assert(0 < arr, "0 < TIM4_ARR");
-	static_assert(arr < 256, "TIM4_ARR < 256");
-	/* ticksCountPerS = F_CLK / (2 * prescaler * (1 + ARR))
-	 *           = 2 MHz / (2 * 128 * (1 + 77)) = 100 Hz */
-	TIM4_ARR = arr;
-
-	setBit(TIM4_IER, TIM4_IER_UIE); // Enable Update Interrupt
-	setBit(TIM4_CR1, TIM4_CR1_CEN); // Enable TIM4
-}
-
 
 struct Display {
 	FU8 displayChars[3 + 3];
@@ -258,72 +221,90 @@ struct Display {
 
 Display display;
 
-#if 0
-
-/*
- * Redirect stdout to UART
- */
-int putchar(int c) {
-	uart_write(c);
-	return 0;
-}
-
-/*
- * Redirect stdin to UART
- */
-int getchar() {
-	return uart_read();
-}
-
-ISR(UART1_RXC_ISR) {
-
-}
-
-void testUart() {
-	uart_init();
-	FU8 x = '0';
-	while(1) {
-//		uart_write(B01010101);
-		uart_write(x);
-		x = ((x == '9') ? '0' : x + 1);
-		delay(25);
-	}
-}
-#endif // 1
-
 void displayDecrimal(FU16 x, FU8* dest) {
 	dest[2] = _7SegmentsFont::digits[divmod10(&x)];
 	dest[1] = _7SegmentsFont::digits[divmod10(&x)];
 	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
 }
 
-typedef FU16 U1_15;
+void displayDecrimal6(FU16 x, FU8* dest) {
+	dest[5] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[4] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[3] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[2] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[1] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
+}
+
+//# 0 < x <= 999(9.99V) => x.xx V
+//# 1000(10.0V) <= x <= 9999(99.99V) => xx.x / 10 V
+void displayVoltage(FU16 x, FU8* dest) {
+	const FU16 xVal = x;
+	(1000 < xVal) && (divmod10(&x));
+
+	dest[2] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[1] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
+
+	if(1000 < xVal) {
+		dest[1] |= _7SegmentsFont::dot;
+	}
+	else {
+		dest[0] |= _7SegmentsFont::dot;
+	}
+}
+
+//# 0 < x <= 999(999mA) => xxx mA
+//# 999(999mA) < x <= 9999(9.999A) => x.xx / 10 A
+void displayCurrent(FU16 x, FU8* dest) {
+	const FU16 xVal = x;
+	(1000 < xVal) && (divmod10(&x));
+
+	dest[2] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[1] = _7SegmentsFont::digits[divmod10(&x)];
+	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
+
+	(1000 < xVal) && (dest[0] |= _7SegmentsFont::dot);
+}
+
+typedef U16 U16_16SubShift_Shift;
 struct Settings {
 	struct AdcUserFix {
-		U1_15 mul;
-		U1_15 add;
-		FU16 fix(FU16 v) {
-			return (v * this->mul + this->add) >> 15;
+		U16_16SubShift_Shift mul;
+		U16_16SubShift_Shift add;
+		FU16 fix(FU16 v, FU8 shift) const {
+			return (FU32(v + this->add) * this->mul) >> shift;
 		}
 	};
 
 	AdcUserFix voltageAdcFix;
 	AdcUserFix currentAdcFix;
+	U8 shift;
 };
 
-Settings settings;
-const Settings defaultSettings = { .voltageAdcFix = { .mul = U1_15(1 << 15), .add = 0 } };
+EEMEM const Settings defaultSettings = {
+	.shift = 10,
+//	.voltageAdcFix = { .mul = U16_16SubShift_Shift(1 << (16 - 4)), .add = 1 },
+	.voltageAdcFix = { .mul = U16_16SubShift_Shift(1550), .add = 0 },
+	.currentAdcFix = { .mul = U16_16SubShift_Shift(500), .add = U16_16SubShift_Shift(-5) }
+};
+Settings const& settings = ((Settings*)(&defaultSettings))[0];
+
+enum { clockDivider = 3 };
 
 void main() {
-	settings = defaultSettings;
-
 	RunningAvg<FU16[adcMaxBufferSize], FU32> voltageAdcRunningAvg;
 	RunningAvg<FU16[adcMaxBufferSize], FU32> currentAdcRunningAvg;
 
 	display.init();
-	initAdc();
-	FU16 counter = 0;
+
+	ADC_init();
+	ADC_initChannel(currentAdcChannelNo);
+	ADC_initChannel(voltageAdcChannelNo);
+
 	FU16 ticksCount = 0;
+
+	displayDecrimal(settings.voltageAdcFix.mul, &display.displayChars[0]);
 
 	while(1) {
 		if(ticksCount & bitsCountToMask(6)) {
@@ -332,22 +313,25 @@ void main() {
 			display.update();
 		}
 
-		if((ticksCount & bitsCountToMask(12))) {
+		#if 1
+		//# run adc at middle of display update interval
+		if((ticksCount & bitsCountToMask(13)) != bitsCountToMask(5)) {
 		}
 		else {
 			ADC_setChannel(voltageAdcChannelNo);
 			ADC_readStart();
-			displayDecrimal(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg()), &(display.displayChars[0]));
+			displayVoltage(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift)), &(display.displayChars[0]));
 			FU16 voltageAdcValue = ADC_read();
 			voltageAdcRunningAvg.add(voltageAdcValue);
-		}
 
-		if(0 && (ticksCount & bitsCountToMask(10)) == 0) {
-			displayDecrimal(counter, &(display.displayChars[0]));
-			displayDecrimal(counter + 1, &(display.displayChars[3]));
-//			display.displayChars[5] = bitRotate(display.displayChars[5], 1);
-			counter += 1;
+			ADC_setChannel(currentAdcChannelNo);
+			ADC_readStart();
+			displayCurrent(settings.currentAdcFix.fix(currentAdcRunningAvg.computeAvg(), settings.shift), &(display.displayChars[3]));
+			FU16 currentAdcValue = ADC_read();
+			currentAdcRunningAvg.add(currentAdcValue);
 		}
+		#endif
+		
 		ticksCount += 1;
 
 	}
