@@ -304,8 +304,6 @@ void main() {
 
 	FU16 ticksCount = 0;
 
-	displayDecrimal(settings.voltageAdcFix.mul, &display.displayChars[0]);
-
 	while(1) {
 		if(ticksCount & bitsCountToMask(9 - clockDivider)) {
 		}
