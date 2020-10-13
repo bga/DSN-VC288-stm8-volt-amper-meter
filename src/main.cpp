@@ -307,15 +307,15 @@ void main() {
 	displayDecrimal(settings.voltageAdcFix.mul, &display.displayChars[0]);
 
 	while(1) {
-		if(ticksCount & bitsCountToMask(6)) {
+		if(ticksCount & bitsCountToMask(9 - clockDivider)) {
 		}
 		else {
 			display.update();
 		}
 
 		#if 1
-		//# run adc at middle of display update interval
-		if((ticksCount & bitsCountToMask(13)) != bitsCountToMask(5)) {
+		//# run adc at middle of display update interval to reduce digital noise
+		if((ticksCount & bitsCountToMask(16 - clockDivider)) != bitsCountToMask(8 - clockDivider)) {
 		}
 		else {
 			ADC_setChannel(voltageAdcChannelNo);
