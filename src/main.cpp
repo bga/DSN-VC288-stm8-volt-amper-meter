@@ -28,6 +28,8 @@
 
 #include "_7SegmentsFont.h"
 
+enum { ticksCountPerS = 6000UL };
+#define msToTicksCount(msArg) (ticksCountPerS * (msArg) / 1000UL)
 
 enum { adcMaxBufferSize = 32 };
 
@@ -156,7 +158,7 @@ struct Display {
 				setBit(port->CR1, bit);
 			}
 		};
-		
+
 		F::initCathode(digit0CathodeGpioPort, digit0CathodeGpioPortBit);
 		F::initCathode(digit1CathodeGpioPort, digit1CathodeGpioPortBit);
 		F::initCathode(digit2CathodeGpioPort, digit2CathodeGpioPortBit);
@@ -172,7 +174,6 @@ struct Display {
 		F::initAnode(digit5AnodeGpioPort, digit5AnodeGpioPortBit);
 		#if NDEBUG
 			F::initAnode(digit6AnodeGpioPort, digit6AnodeGpioAndSwimPortBit);
-			initAnode(D, );
 		#endif // NDEBUG
 		F::initAnode(digitDotAnodeGpioPort, digitDotAnodeGpioPortBit);
 	}
@@ -304,45 +305,76 @@ Settings const& settings = ((Settings*)(&defaultSettings))[0];
 
 enum { clockDivider = 3 };
 
-void main() {
-	RunningAvg<FU16[adcMaxBufferSize], FU32> voltageAdcRunningAvg;
-	RunningAvg<FU16[adcMaxBufferSize], FU32> currentAdcRunningAvg;
+void Timer_init() {
+	/* Prescaler = 128 */
+//	TIM4_PSCR = B00000111;
+	TIM4_PSCR = 2;
 
-	display.init();
+	enum {
+		prescaler = 2,
+		arr = F_CPU / (1 << clockDivider ) / ticksCountPerS / 2 / prescaler - 1
+	};
 
-	ADC_init();
-	ADC_initChannel(currentAdcChannelNo);
-	ADC_initChannel(voltageAdcChannelNo);
+	//TODO static_assert for IAR
+	static_assert(0 < arr, "0 < TIM4_ARR");
+	static_assert(arr < 256, "TIM4_ARR < 256");
+	/* ticksCountPerS = F_CLK / (2 * prescaler * (1 + ARR))
+	 *           = 2 MHz / (2 * 128 * (1 + 77)) = 100 Hz */
+	TIM4_ARR = arr;
 
-	FU16 ticksCount = 0;
+	setBit(TIM4_IER, TIM4_IER_UIE); // Enable Update Interrupt
+	setBit(TIM4_CR1, TIM4_CR1_CEN); // Enable TIM4
+}
 
-	while(1) {
-		if(ticksCount & bitsCountToMask(9 - clockDivider)) {
-		}
-		else {
-			display.update();
-		}
+RunningAvg<FU16[adcMaxBufferSize], FU32> voltageAdcRunningAvg;
+RunningAvg<FU16[adcMaxBufferSize], FU32> currentAdcRunningAvg;
 
-		#if 1
-		//# run adc at middle of display update interval to reduce digital noise
-		if((ticksCount & bitsCountToMask(16 - clockDivider)) != bitsCountToMask(8 - clockDivider)) {
-		}
-		else {
+FU16 ticksCount = 0;
+
+ISR(TIM4_ISR) {
+	clearBit(TIM4_SR, TIM4_SR_UIF);
+
+	ticksCount += 1;
+
+	display.update();
+
+	#if 1
+	if((ticksCount & bitsCountToMask(5))) {
+	}
+	else {
+		if((ticksCount & bitsCountToMask(6))) {
 			ADC_setChannel(voltageAdcChannelNo);
 			ADC_readStart();
 			displayVoltage(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift)), &(display.displayChars[0]));
 			FU16 voltageAdcValue = ADC_read();
 			voltageAdcRunningAvg.add(voltageAdcValue);
-
+		}
+		else {
 			ADC_setChannel(currentAdcChannelNo);
 			ADC_readStart();
 			displayCurrent(settings.currentAdcFix.fix(currentAdcRunningAvg.computeAvg(), settings.shift), &(display.displayChars[3]));
 			FU16 currentAdcValue = ADC_read();
 			currentAdcRunningAvg.add(currentAdcValue);
 		}
-		#endif
-		
-		ticksCount += 1;
-
 	}
+	#endif
+}
+
+
+void main() {
+
+	display.init();
+
+	forInc(FU8, i, 0, 6) {
+		display.displayChars[i] = _7SegmentsFont::digits[i];
+	}
+
+	ADC_init();
+	ADC_initChannel(currentAdcChannelNo);
+	ADC_initChannel(voltageAdcChannelNo);
+
+	Timer_init();
+	enable_interrupts();
+
+	while(1) __wait_for_interrupt();
 }
