@@ -21,10 +21,6 @@
 #include <intrinsics.h>
 #include <eeprom.h>
 
-#ifdef __ICCSTM8__
-  #define EEMEM __eeprom
-#endif //# __ICCSTM8__
-
 #include <!cpp/bitManipulations.h>
 #include <!cpp/Binary_values_8_bit.h>
 #include <!cpp/RunningAvg.h>
