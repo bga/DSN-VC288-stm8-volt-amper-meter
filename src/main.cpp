@@ -367,10 +367,22 @@ void Clock_setCpuFullSpeed() {
 	CLK_CKDIVR = 0;
 }
 
+void Hw_enable() {
+	enum { 
+		CLK_PCKENR1_TIM4 = 4 
+	};
+	CLK_PCKENR1 = _BV(CLK_PCKENR1_TIM4);
+	
+	enum { 
+		CLK_PCKENR12_ADC = 3 
+	};
+	CLK_PCKENR2 = _BV(CLK_PCKENR12_ADC);
+}
 
 void main() {
 
 	Clock_setCpuFullSpeed();
+	Hw_enable();
 	display.init();
 
 	forInc(FU8, i, 0, 6) {
