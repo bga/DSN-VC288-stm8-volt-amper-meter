@@ -40,23 +40,40 @@ enum { adcMaxBufferSize = 32 };
 		__interrupt void _ ## vectorArg ## _vector (void)
 #endif //# __ICCSTM8__
 
+volatile GPIO_TypeDef* const digit2CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit1CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit0CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit5CathodeGpioPort = (GPIO_TypeDef*)PA_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit4CathodeGpioPort = (GPIO_TypeDef*)PB_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit3CathodeGpioPort = (GPIO_TypeDef*)PB_BASE_ADDRESS;
+
 enum {
-	digit2Cathode_D = 5,
-	digit1Cathode_D = 6,
-	digit0Cathode_D = 4,
-	digit5Cathode_A = 1,
-	digit4Cathode_B = 4,
-	digit3Cathode_B = 5,
+	digit2CathodeGpioPortBit = 5,
+	digit1CathodeGpioPortBit = 6,
+	digit0CathodeGpioPortBit = 4,
+	digit5CathodeGpioPortBit = 1,
+	digit4CathodeGpioPortBit = 4,
+	digit3CathodeGpioPortBit = 5,
 };
+
+volatile GPIO_TypeDef* const digit0AnodeGpioPort = (GPIO_TypeDef*)PC_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit1AnodeGpioPort = (GPIO_TypeDef*)PC_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit2AnodeGpioPort = (GPIO_TypeDef*)PC_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit3AnodeGpioPort = (GPIO_TypeDef*)PC_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit4AnodeGpioPort = (GPIO_TypeDef*)PA_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit5AnodeGpioPort = (GPIO_TypeDef*)PA_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digit6AnodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
+volatile GPIO_TypeDef* const digitDotAnodeGpioPort = (GPIO_TypeDef*)PC_BASE_ADDRESS;
+
 enum {
-	digit0Anode_C = 6,
-	digit1Anode_C = 7,
-	digit2Anode_C = 3,
-	digit3Anode_C = 4,
-	digit4Anode_A = 3,
-	digit5Anode_A = 2,
-	digit6Anode_DAndSwim = 1,
-	digitDotAnode_C = 5,
+	digit0AnodeGpioPortBit = 6,
+	digit1AnodeGpioPortBit = 7,
+	digit2AnodeGpioPortBit = 3,
+	digit3AnodeGpioPortBit = 4,
+	digit4AnodeGpioPortBit = 3,
+	digit5AnodeGpioPortBit = 2,
+	digit6AnodeGpioAndSwimPortBit = 1,
+	digitDotAnodeGpioPortBit = 5,
 };
 
 enum {
@@ -132,44 +149,51 @@ FU16 ADC_read() {
 	return (adcL | (adcH << 8));
 }
 
+
 struct Display {
 	FU8 displayChars[3 + 3];
 	FU8 currentDisplayIndex;
 
 	void init() {
-		#define initAnode(portLetterArg, bitNoArg) setBit(CONCAT(CONCAT(P, portLetterArg), _DDR), bitNoArg); setBit(CONCAT(CONCAT(P, portLetterArg), _CR1), bitNoArg);
-		#define initCathode(portLetterArg, bitNoArg) setBit(CONCAT(CONCAT(P, portLetterArg), _DDR), bitNoArg); setBit(CONCAT(CONCAT(P, portLetterArg), _ODR), bitNoArg);
+		struct F {
+			static inline void initCathode(volatile GPIO_TypeDef* port, U8 bit) {
+				setBit(port->DDR, bit);
+				setBit(port->ODR, bit);
+			}
+			static inline void initAnode(volatile GPIO_TypeDef* port, U8 bit) {
+				setBit(port->DDR, bit);
+				setBit(port->CR1, bit);
+			}
+		};
+		
+		F::initCathode(digit0CathodeGpioPort, digit0CathodeGpioPortBit);
+		F::initCathode(digit1CathodeGpioPort, digit1CathodeGpioPortBit);
+		F::initCathode(digit2CathodeGpioPort, digit2CathodeGpioPortBit);
+		F::initCathode(digit3CathodeGpioPort, digit3CathodeGpioPortBit);
+		F::initCathode(digit4CathodeGpioPort, digit4CathodeGpioPortBit);
+		F::initCathode(digit5CathodeGpioPort, digit5CathodeGpioPortBit);
 
-		initCathode(D, digit0Cathode_D);
-		initCathode(D, digit1Cathode_D);
-		initCathode(D, digit2Cathode_D);
-		initCathode(B, digit3Cathode_B);
-		initCathode(B, digit4Cathode_B);
-		initCathode(A, digit5Cathode_A);
-
-		initAnode(C, digit0Anode_C);
-		initAnode(C, digit1Anode_C);
-		initAnode(C, digit2Anode_C);
-		initAnode(C, digit3Anode_C);
-		initAnode(A, digit4Anode_A);
-		initAnode(A, digit5Anode_A);
+		F::initAnode(digit0AnodeGpioPort, digit0AnodeGpioPortBit);
+		F::initAnode(digit1AnodeGpioPort, digit1AnodeGpioPortBit);
+		F::initAnode(digit2AnodeGpioPort, digit2AnodeGpioPortBit);
+		F::initAnode(digit3AnodeGpioPort, digit3AnodeGpioPortBit);
+		F::initAnode(digit4AnodeGpioPort, digit4AnodeGpioPortBit);
+		F::initAnode(digit5AnodeGpioPort, digit5AnodeGpioPortBit);
 		#if NDEBUG
-			initAnode(D, digit6Anode_DAndSwim);
+			F::initAnode(digit6AnodeGpioPort, digit6AnodeGpioAndSwimPortBit);
+			initAnode(D, );
 		#endif // NDEBUG
-		initAnode(C, digitDotAnode_C);
-
-		#undef initAnode
-		#undef initCathode
+		F::initAnode(digitDotAnodeGpioPort, digitDotAnodeGpioPortBit);
 	}
 
 	void turnOffDisplay() {
 		//# do not touch SWIM during debug
-		setBitValue(PD_ODR, digit0Cathode_D, 1);
-		setBitValue(PD_ODR, digit1Cathode_D, 1);
-		setBitValue(PD_ODR, digit2Cathode_D, 1);
-		setBitValue(PA_ODR, digit5Cathode_A, 1);
-		setBitValue(PB_ODR, digit4Cathode_B, 1);
-		setBitValue(PB_ODR, digit3Cathode_B, 1);
+		setBitValue(digit0CathodeGpioPort->ODR, digit0CathodeGpioPortBit, 1);
+		setBitValue(digit1CathodeGpioPort->ODR, digit1CathodeGpioPortBit, 1);
+		setBitValue(digit2CathodeGpioPort->ODR, digit2CathodeGpioPortBit, 1);
+		setBitValue(digit5CathodeGpioPort->ODR, digit5CathodeGpioPortBit, 1);
+		setBitValue(digit4CathodeGpioPort->ODR, digit4CathodeGpioPortBit, 1);
+		setBitValue(digit3CathodeGpioPort->ODR, digit3CathodeGpioPortBit, 1);
 	}
 
 	void setDigit(FU8 digitIndex, FU8 digitBitsState) {
@@ -182,32 +206,32 @@ struct Display {
 
 //		digitBitsState = ~digitBitsState;
 		#if 1
-		setBitValue(PC_ODR, digit0Anode_C, hasBit(digitBitsState, 0));
-		setBitValue(PC_ODR, digit1Anode_C, hasBit(digitBitsState, 1));
-		setBitValue(PC_ODR, digit2Anode_C, hasBit(digitBitsState, 2));
-		setBitValue(PC_ODR, digit3Anode_C, hasBit(digitBitsState, 3));
-		setBitValue(PA_ODR, digit4Anode_A, hasBit(digitBitsState, 4));
-		setBitValue(PA_ODR, digit5Anode_A, hasBit(digitBitsState, 5));
+		setBitValue(digit0AnodeGpioPort->ODR, digit0AnodeGpioPortBit, hasBit(digitBitsState, 0));
+		setBitValue(digit1AnodeGpioPort->ODR, digit1AnodeGpioPortBit, hasBit(digitBitsState, 1));
+		setBitValue(digit2AnodeGpioPort->ODR, digit2AnodeGpioPortBit, hasBit(digitBitsState, 2));
+		setBitValue(digit3AnodeGpioPort->ODR, digit3AnodeGpioPortBit, hasBit(digitBitsState, 3));
+		setBitValue(digit4AnodeGpioPort->ODR, digit4AnodeGpioPortBit, hasBit(digitBitsState, 4));
+		setBitValue(digit5AnodeGpioPort->ODR, digit5AnodeGpioPortBit, hasBit(digitBitsState, 5));
 		// do not touch SWIM during debug
 		#if NDEBUG
-			setBitValue(PD_ODR, digit6Anode_DAndSwim, hasBit(digitBitsState, 6));
+			setBitValue(digit6AnodeGpioPort->ODR, digit6AnodeGpioAndSwimPortBit, hasBit(digitBitsState, 6));
 		#endif
-		setBitValue(PC_ODR, digitDotAnode_C, hasBit(digitBitsState, 7));
+		setBitValue(digitDotAnodeGpioPort->ODR, digitDotAnodeGpioPortBit, hasBit(digitBitsState, 7));
 
 		#else
-		setBitMaskedValues(PD_ODR, digit0Anode_C, bitsCountToMask(2), digitBitsState >> 0);
-		setBitValue(PC_ODR, digit2Anode_C, (digitBitsState >> 2) & 1);
-		setBitMaskedValues(PC_ODR, digit4Anode_A, bitsCountToMask(2), digitBitsState >> 3);
-		setBitMaskedValues(PA_ODR, digit3Anode_C, bitsCountToMask(2), digitBitsState >> 5);
+		setBitMaskedValues(digit0AnodeGpioPort->ODR, digit0AnodeGpioPortBit, bitsCountToMask(2), digitBitsState >> 0);
+		setBitValue(digit2AnodeGpioPort->ODR, digit2AnodeGpioPortBit, (digitBitsState >> 2) & 1);
+		setBitMaskedValues(digit4AnodeGpioPort->ODR, digit4AnodeGpioPortBit, bitsCountToMask(2), digitBitsState >> 3);
+		setBitMaskedValues(digit3AnodeGpioPort->ODR, digit3AnodeGpioPortBit, bitsCountToMask(2), digitBitsState >> 5);
 		#endif // 1
 
 		switch(digitIndex) {
-			case(0): setBitValue(PD_ODR, digit0Cathode_D, 0); break;
-			case(1): setBitValue(PD_ODR, digit1Cathode_D, 0); break;
-			case(2): setBitValue(PD_ODR, digit2Cathode_D, 0); break;
-			case(3): setBitValue(PB_ODR, digit3Cathode_B, 0); break;
-			case(4): setBitValue(PB_ODR, digit4Cathode_B, 0); break;
-			case(5): setBitValue(PA_ODR, digit5Cathode_A, 0); break;
+			case(0): setBitValue(digit0CathodeGpioPort->ODR, digit0CathodeGpioPortBit, 0); break;
+			case(1): setBitValue(digit0CathodeGpioPort->ODR, digit1CathodeGpioPortBit, 0); break;
+			case(2): setBitValue(digit2CathodeGpioPort->ODR, digit2CathodeGpioPortBit, 0); break;
+			case(3): setBitValue(digit3CathodeGpioPort->ODR, digit3CathodeGpioPortBit, 0); break;
+			case(4): setBitValue(digit4CathodeGpioPort->ODR, digit4CathodeGpioPortBit, 0); break;
+			case(5): setBitValue(digit5CathodeGpioPort->ODR, digit5CathodeGpioPortBit, 0); break;
 		}
 	}
 
