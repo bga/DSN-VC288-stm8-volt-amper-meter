@@ -237,18 +237,15 @@ struct Display {
 Display display;
 
 void displayDecrimal(FU16 x, FU8* dest) {
-	dest[2] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[1] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
+	forDec(int, i,  0, 3) {
+		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
+	}
 }
 
 void displayDecrimal6(FU16 x, FU8* dest) {
-	dest[5] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[4] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[3] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[2] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[1] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
+	forDec(int, i,  0, 6) {
+		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
+	}
 }
 
 //# 0 < x <= 999(9.99V) => x.xx V
@@ -257,9 +254,9 @@ void displayVoltage(FU16 x, FU8* dest) {
 	const FU16 xVal = x;
 	(1000 < xVal) && (divmod10(&x));
 
-	dest[2] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[1] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
+	forDec(int, i,  0, 3) {
+		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
+	}
 
 	if(1000 < xVal) {
 		dest[1] |= _7SegmentsFont::dot;
@@ -275,9 +272,9 @@ void displayCurrent(FU16 x, FU8* dest) {
 	const FU16 xVal = x;
 	(1000 < xVal) && (divmod10(&x));
 
-	dest[2] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[1] = _7SegmentsFont::digits[divmod10(&x)];
-	dest[0] = _7SegmentsFont::digits[divmod10(&x)];
+	forDec(int, i,  0, 3) {
+		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
+	}
 
 	(1000 < xVal) && (dest[0] |= _7SegmentsFont::dot);
 }
