@@ -33,6 +33,8 @@ enum { ticksCountPerS = 6000UL };
 
 enum { adcMaxBufferSize = 32 };
 
+enum { adcSpeedPrescaler = 7 };
+
 volatile GPIO_TypeDef* const digit2CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
 volatile GPIO_TypeDef* const digit1CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
 volatile GPIO_TypeDef* const digit0CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
@@ -303,16 +305,17 @@ EEMEM const Settings defaultSettings = {
 };
 Settings const& settings = ((Settings*)(&defaultSettings))[0];
 
-enum { clockDivider = 3 };
+enum { clockDivider = 1 };
 
 void Timer_init() {
 	/* Prescaler = 128 */
 //	TIM4_PSCR = B00000111;
-	TIM4_PSCR = 2;
+	TIM4_PSCR = 5;
 
 	enum {
-		prescaler = 2,
-		arr = F_CPU / (1 << clockDivider ) / ticksCountPerS / 2 / prescaler - 1
+		prescaler = 32,
+		// arr = F_CPU / (1 << clockDivider ) / ticksCountPerS / 2 / prescaler - 1
+		arr = 180
 	};
 
 	//TODO static_assert for IAR
@@ -339,10 +342,10 @@ ISR(TIM4_ISR) {
 	display.update();
 
 	#if 1
-	if((ticksCount & bitsCountToMask(5))) {
+	if((ticksCount & bitsCountToMask(adcSpeedPrescaler))) {
 	}
 	else {
-		if((ticksCount & bitsCountToMask(6))) {
+		if((ticksCount & bitsCountToMask(1 + adcSpeedPrescaler))) {
 			ADC_setChannel(voltageAdcChannelNo);
 			ADC_readStart();
 			displayVoltage(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift)), &(display.displayChars[0]));
@@ -360,9 +363,14 @@ ISR(TIM4_ISR) {
 	#endif
 }
 
+void Clock_setCpuFullSpeed() {
+	CLK_CKDIVR = 0;
+}
+
 
 void main() {
 
+	Clock_setCpuFullSpeed();
 	display.init();
 
 	forInc(FU8, i, 0, 6) {
