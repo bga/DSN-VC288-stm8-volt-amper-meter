@@ -35,11 +35,6 @@
 
 enum { adcMaxBufferSize = 32 };
 
-#ifdef __ICCSTM8__
-  #define ISR(vectorArg) PRAGMA(vector = vectorArg + 2) \
-		__interrupt void _ ## vectorArg ## _vector (void)
-#endif //# __ICCSTM8__
-
 volatile GPIO_TypeDef* const digit2CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
 volatile GPIO_TypeDef* const digit1CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
 volatile GPIO_TypeDef* const digit0CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
