@@ -44,6 +44,15 @@ static_assert(TIM4_arr < 256, "TIM4_ARR < 256");
 
 #define msToTicksCount(msArg) (ticksCountPerSReal * (msArg) / 1000UL)
 
+void Timer_init() {
+	TIM4_PSCR = TIM4_prescaler;
+
+	TIM4_ARR = TIM4_arr;
+
+	setBit(TIM4_IER, TIM4_IER_UIE); // Enable Update Interrupt
+	setBit(TIM4_CR1, TIM4_CR1_CEN); // Enable TIM4
+}
+
 enum { adcMaxBufferSize = 32 };
 
 enum { 
@@ -341,15 +350,6 @@ EEMEM const Settings defaultSettings = {
 	.currentAdcFix = { .mul = U16_16SubShift_Shift(500), .add = U16_16SubShift_Shift(-5) }
 };
 Settings const& settings = ((Settings*)(&defaultSettings))[0];
-
-void Timer_init() {
-	TIM4_PSCR = TIM4_prescaler;
-
-	TIM4_ARR = TIM4_arr;
-
-	setBit(TIM4_IER, TIM4_IER_UIE); // Enable Update Interrupt
-	setBit(TIM4_CR1, TIM4_CR1_CEN); // Enable TIM4
-}
 
 RunningAvg<FU16[adcMaxBufferSize], FU32> voltageAdcRunningAvg;
 RunningAvg<FU16[adcMaxBufferSize], FU32> currentAdcRunningAvg;
