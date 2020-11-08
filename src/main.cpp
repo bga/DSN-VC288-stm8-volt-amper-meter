@@ -256,13 +256,13 @@ void displayDecrimal6(FU16 x, FU8* dest) {
 //# 1000(10.0V) <= x <= 9999(99.99V) => xx.x / 10 V
 void displayVoltage(FU16 x, FU8* dest) {
 	const FU16 xVal = x;
-	(1000 < xVal) && (divmod10(&x));
+	(1000 <= xVal) && (divmod10(&x));
 
 	forDec(int, i,  0, 3) {
 		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
 	}
 
-	if(1000 < xVal) {
+	if(1000 <= xVal) {
 		dest[1] |= _7SegmentsFont::dot;
 	}
 	else {
@@ -292,13 +292,13 @@ void display_fixLastDigit(FU16 x, FU8* dest, void (*display)(FU16 x, FU8* dest))
 //# 999(999mA) < x <= 9999(9.999A) => x.xx / 10 A
 void displayCurrent(FU16 x, FU8* dest) {
 	const FU16 xVal = x;
-	(1000 < xVal) && (divmod10(&x));
+	(1000 <= xVal) && (divmod10(&x));
 
 	forDec(int, i,  0, 3) {
 		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
 	}
 
-	(1000 < xVal) && (dest[0] |= _7SegmentsFont::dot);
+	(1000 <= xVal) && (dest[0] |= _7SegmentsFont::dot);
 }
 
 typedef U16 U16_16SubShift_Shift;
