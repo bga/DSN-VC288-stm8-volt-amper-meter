@@ -65,20 +65,20 @@
                 <option>
                     <name>GenLibInFormatter</name>
                     <version>0</version>
-                    <state>2</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>GenLibInFormatterDescription</name>
-                    <state>Full formatting, without multibytes.</state>
+                    <state>Full formatting.</state>
                 </option>
                 <option>
                     <name>GenLibOutFormatter</name>
                     <version>0</version>
-                    <state>2</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>GenLibOutFormatterDescription</name>
-                    <state>Full formatting, without multibytes.</state>
+                    <state>Full formatting.</state>
                 </option>
                 <option>
                     <name>GenStackSize</name>
@@ -146,21 +146,21 @@
                 </option>
                 <option>
                     <name>IccOptLevel</name>
-                    <state>1</state>
+                    <state>3</state>
                 </option>
                 <option>
                     <name>IccOptStrategy</name>
                     <version>0</version>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>IccOptLevelSlave</name>
-                    <state>1</state>
+                    <state>3</state>
                 </option>
                 <option>
                     <name>IccOptAllowList</name>
                     <version>0</version>
-                    <state>000000</state>
+                    <state>111111</state>
                 </option>
                 <option>
                     <name>IccGenerateDebugInfo</name>
@@ -256,7 +256,7 @@
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
-                    <state>E:\p\!electronics\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min</state>
+                    <state>E:\p\!electronics\!stm8\stm8-bare-min\stm8s\lib</state>
                     <state>E:\p\!electronics\!mcu\include</state>
                     <state>E:\p\!cpp\include</state>
                 </option>
@@ -850,20 +850,20 @@
                 <option>
                     <name>GenRuntimeLibSelect</name>
                     <version>0</version>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>GenRuntimeLibSelectSlave</name>
                     <version>0</version>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>GenRTDescription</name>
-                    <state>Do not link with a runtime library.</state>
+                    <state>Use the normal configuration of the C/EC++ runtime library. No locale interface, C locale, no file descriptor support, no multibytes in printf and scanf, and no hex floats in strtod.</state>
                 </option>
                 <option>
                     <name>GenRTConfigPath</name>
-                    <state></state>
+                    <state>$TOOLKIT_DIR$\LIB\dlstm8smn.h</state>
                 </option>
                 <option>
                     <name>GenLibInFormatter</name>
@@ -1055,11 +1055,13 @@
                 </option>
                 <option>
                     <name>PreInclude</name>
-                    <state></state>
+                    <state>$PROJ_DIR$\config.h</state>
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
-                    <state></state>
+                    <state>E:\p\!electronics\!stm8\stm8-bare-min\stm8s\lib</state>
+                    <state>E:\p\!electronics\!mcu\include</state>
+                    <state>E:\p\!cpp\include</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1089,7 +1091,7 @@
                 </option>
                 <option>
                     <name>IccLang</name>
-                    <state>0</state>
+                    <state>2</state>
                 </option>
                 <option>
                     <name>IccCDialect</name>
@@ -1097,7 +1099,7 @@
                 </option>
                 <option>
                     <name>IccAllowVLA</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>IccCppDialect</name>
@@ -1290,7 +1292,7 @@
                 </option>
                 <option>
                     <name>OOCOutputFile</name>
-                    <state></state>
+                    <state>stm8-volt-amper-meter-iar.srec</state>
                 </option>
                 <option>
                     <name>OOCCommandLineProducer</name>
@@ -1409,7 +1411,7 @@
                 </option>
                 <option>
                     <name>IlinkIcfFile</name>
-                    <state>lnk0t.icf</state>
+                    <state>$TOOLKIT_DIR$\config\lnkstm8s003f3.icf</state>
                 </option>
                 <option>
                     <name>IlinkIcfFileSlave</name>
@@ -1469,11 +1471,11 @@
                 </option>
                 <option>
                     <name>IlinkProgramEntryLabelSelect</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>IlinkProgramEntryLabel</name>
-                    <state></state>
+                    <state>__iar_program_start</state>
                 </option>
                 <option>
                     <name>DoFill</name>
@@ -1614,28 +1616,13 @@
     <group>
         <name>stm8s-bare-min</name>
         <file>
-            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\delay.c</name>
-        </file>
-        <file>
             <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\delay.h</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\eeprom.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\eeprom.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\i2c.h</name>
-        </file>
-        <file>
             <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\stm8s.h</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\uart.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\uart.h</name>
         </file>
     </group>
 </project>
