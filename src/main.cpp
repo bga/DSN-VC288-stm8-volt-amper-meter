@@ -17,6 +17,7 @@
 //#define F_CPU 8000000UL
 
 #include <stdint.h>
+#include <string.h>
 #include <stm8s.h>
 #include <intrinsics.h>
 #include <eeprom.h>
@@ -269,6 +270,24 @@ void displayVoltage(FU16 x, FU8* dest) {
 	}
 }
 
+void display_fixLastDigit(FU16 x, FU8* dest, void (*display)(FU16 x, FU8* dest)) {
+	//# small value
+	if(1000 <= x) {
+		display(x, dest);
+	}
+	else {
+		FU8 newDigits[3];
+		display(x, newDigits);
+		//# prevent display last digit small changes (ADC error) 
+		if(newDigits[0] == dest[0] && newDigits[1] == dest[1]) {
+			//# keep old digits
+		}
+		else {
+			memcpy(dest, newDigits, 3);
+		}
+	}
+}
+
 //# 0 < x <= 999(999mA) => xxx mA
 //# 999(999mA) < x <= 9999(9.999A) => x.xx / 10 A
 void displayCurrent(FU16 x, FU8* dest) {
@@ -348,14 +367,14 @@ ISR(TIM4_ISR) {
 		if((ticksCount & bitsCountToMask(1 + adcSpeedPrescaler))) {
 			ADC_setChannel(voltageAdcChannelNo);
 			ADC_readStart();
-			displayVoltage(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift)), &(display.displayChars[0]));
+			display_fixLastDigit(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift)), &(display.displayChars[0]), displayVoltage);
 			FU16 voltageAdcValue = ADC_read();
 			voltageAdcRunningAvg.add(voltageAdcValue);
 		}
 		else {
 			ADC_setChannel(currentAdcChannelNo);
 			ADC_readStart();
-			displayCurrent(settings.currentAdcFix.fix(currentAdcRunningAvg.computeAvg(), settings.shift), &(display.displayChars[3]));
+			display_fixLastDigit(settings.currentAdcFix.fix(currentAdcRunningAvg.computeAvg(), settings.shift), &(display.displayChars[3]), displayCurrent);
 			FU16 currentAdcValue = ADC_read();
 			currentAdcRunningAvg.add(currentAdcValue);
 		}
