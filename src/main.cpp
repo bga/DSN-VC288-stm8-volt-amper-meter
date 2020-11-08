@@ -29,12 +29,30 @@
 
 #include "_7SegmentsFont.h"
 
-enum { ticksCountPerS = 6000UL };
-#define msToTicksCount(msArg) (ticksCountPerS * (msArg) / 1000UL)
+enum { 
+	clockDivider = 1, 
+	ticksCountPerSAprox = 1600UL,
+	
+	TIM4_prescaler = 7,  
+	TIM4_arr = F_CPU / (1 << clockDivider ) / 2 / ((1 << TIM4_prescaler) - 1) / ticksCountPerSAprox,
+	
+	ticksCountPerSReal = F_CPU / (1 << clockDivider ) / 2 / ((1 << TIM4_prescaler) - 1) / TIM4_arr 
+};
+
+static_assert(0 < TIM4_arr, "0 < TIM4_ARR");
+static_assert(TIM4_arr < 256, "TIM4_ARR < 256");
+
+#define msToTicksCount(msArg) (ticksCountPerSReal * (msArg) / 1000UL)
 
 enum { adcMaxBufferSize = 32 };
 
-enum { adcSpeedPrescaler = 7 };
+enum { 
+	//# fetch ADC - 1600Hz / 16 = 100Hz 
+	adcFetchSpeedPrescaler = 4,
+
+	//# display ADC - 1600Hz / 16 / 32 = ~3Hz 
+	adcDisplaySpeedPrescaler = 9,
+};
 
 volatile GPIO_TypeDef* const digit2CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
 volatile GPIO_TypeDef* const digit1CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
@@ -324,25 +342,10 @@ EEMEM const Settings defaultSettings = {
 };
 Settings const& settings = ((Settings*)(&defaultSettings))[0];
 
-enum { clockDivider = 1 };
-
 void Timer_init() {
-	/* Prescaler = 128 */
-//	TIM4_PSCR = B00000111;
-	TIM4_PSCR = 5;
+	TIM4_PSCR = TIM4_prescaler;
 
-	enum {
-		prescaler = 32,
-		// arr = F_CPU / (1 << clockDivider ) / ticksCountPerS / 2 / prescaler - 1
-		arr = 180
-	};
-
-	//TODO static_assert for IAR
-	static_assert(0 < arr, "0 < TIM4_ARR");
-	static_assert(arr < 256, "TIM4_ARR < 256");
-	/* ticksCountPerS = F_CLK / (2 * prescaler * (1 + ARR))
-	 *           = 2 MHz / (2 * 128 * (1 + 77)) = 100 Hz */
-	TIM4_ARR = arr;
+	TIM4_ARR = TIM4_arr;
 
 	setBit(TIM4_IER, TIM4_IER_UIE); // Enable Update Interrupt
 	setBit(TIM4_CR1, TIM4_CR1_CEN); // Enable TIM4
@@ -361,22 +364,33 @@ ISR(TIM4_ISR) {
 	display.update();
 
 	#if 1
-	if((ticksCount & bitsCountToMask(adcSpeedPrescaler))) {
+	if((ticksCount & bitsCountToMask(adcFetchSpeedPrescaler - 1))) {
 	}
 	else {
-		if((ticksCount & bitsCountToMask(1 + adcSpeedPrescaler))) {
+		if((ticksCount & bitsCountToMask(adcFetchSpeedPrescaler))) {
 			ADC_setChannel(voltageAdcChannelNo);
 			ADC_readStart();
-			display_fixLastDigit(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift)), &(display.displayChars[0]), displayVoltage);
 			FU16 voltageAdcValue = ADC_read();
 			voltageAdcRunningAvg.add(voltageAdcValue);
 		}
 		else {
 			ADC_setChannel(currentAdcChannelNo);
 			ADC_readStart();
-			display_fixLastDigit(settings.currentAdcFix.fix(currentAdcRunningAvg.computeAvg(), settings.shift), &(display.displayChars[3]), displayCurrent);
 			FU16 currentAdcValue = ADC_read();
 			currentAdcRunningAvg.add(currentAdcValue);
+		}
+	}
+	#endif
+	
+	#if 1
+	if((ticksCount & bitsCountToMask(adcDisplaySpeedPrescaler - 1))) {
+	}
+	else {
+		if((ticksCount & bitsCountToMask(adcDisplaySpeedPrescaler))) {
+			display_fixLastDigit(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift)), &(display.displayChars[0]), displayVoltage);
+		}
+		else {
+			display_fixLastDigit(settings.currentAdcFix.fix(currentAdcRunningAvg.computeAvg(), settings.shift), &(display.displayChars[3]), displayCurrent);
 		}
 	}
 	#endif
