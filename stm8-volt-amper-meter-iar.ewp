@@ -489,7 +489,7 @@
                 </option>
                 <option>
                     <name>OOCOutputFile</name>
-                    <state>heater pid controller.srec</state>
+                    <state>stm8-volt-amper-meter-iar.srec</state>
                 </option>
                 <option>
                     <name>OOCCommandLineProducer</name>
@@ -1347,7 +1347,7 @@
                 </option>
                 <option>
                     <name>IlinkOutputFile</name>
-                    <state>heater pid controller.out</state>
+                    <state>stm8-volt-amper-meter-iar.out</state>
                 </option>
                 <option>
                     <name>IlinkDebugInfoEnable</name>
