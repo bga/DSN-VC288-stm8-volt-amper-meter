@@ -106,6 +106,10 @@ enum {
 	currentAdcPortD = 2
 };
 
+template<typename TArg> TArg abs(const TArg& x) {
+	return (x < 0) ? -x : x;
+}
+
 #if 1
 FU16 divmod10(FU16* in) {
 	FU16 div = *in  / 10;
@@ -340,6 +344,8 @@ struct Settings {
 
 	AdcUserFix voltageAdcFix;
 	AdcUserFix currentAdcFix;
+	U16 voltageHysteresys;
+	U16 currentHysteresys;
 	U8 shift;
 };
 
@@ -347,7 +353,9 @@ EEMEM const Settings defaultSettings = {
 	.shift = 10,
 //	.voltageAdcFix = { .mul = U16_16SubShift_Shift(1 << (16 - 4)), .add = 1 },
 	.voltageAdcFix = { .mul = U16_16SubShift_Shift(1550), .add = 0 },
-	.currentAdcFix = { .mul = U16_16SubShift_Shift(500), .add = U16_16SubShift_Shift(-5) }
+	.currentAdcFix = { .mul = U16_16SubShift_Shift(500), .add = U16_16SubShift_Shift(-5) }, 
+	.voltageHysteresys = 6, 
+	.currentHysteresys = 5, 
 };
 Settings const& settings = ((Settings*)(&defaultSettings))[0];
 
@@ -355,6 +363,9 @@ RunningAvg<FU16[adcMaxBufferSize], FU32> voltageAdcRunningAvg;
 RunningAvg<FU16[adcMaxBufferSize], FU32> currentAdcRunningAvg;
 
 FU16 ticksCount = 0;
+
+FU16 lastVoltageAvgValue = 0;
+FU16 lastCurrentAvgValue = 0x7FFF;
 
 ISR(TIM4_ISR) {
 	clearBit(TIM4_SR, TIM4_SR_UIF);
@@ -387,10 +398,25 @@ ISR(TIM4_ISR) {
 	}
 	else {
 		if((ticksCount & bitsCountToMask(adcDisplaySpeedPrescaler))) {
-			display_fixLastDigit(settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift)), &(display.displayChars[0]), displayVoltage);
+			FU16 avg = settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift));
+			if(abs(FI16(avg - lastVoltageAvgValue)) < settings.voltageHysteresys) {
+				
+			}
+			else {
+				lastVoltageAvgValue = avg;
+				displayVoltage(avg, &(display.displayChars[0]));
+			}
 		}
 		else {
-			display_fixLastDigit(settings.currentAdcFix.fix(currentAdcRunningAvg.computeAvg(), settings.shift), &(display.displayChars[3]), displayCurrent);
+			FU16 avg = settings.currentAdcFix.fix(currentAdcRunningAvg.computeAvg(), FU8(settings.shift));
+			if(abs(FI16(avg - lastCurrentAvgValue)) < settings.currentHysteresys) {
+				
+			}
+			else {
+				lastCurrentAvgValue = avg;
+				displayCurrent(avg, &(display.displayChars[3]));
+				// display_fixLastDigit(avg, &(display.displayChars[3]), displayVoltage);
+			}
 		}
 	}
 	#endif
