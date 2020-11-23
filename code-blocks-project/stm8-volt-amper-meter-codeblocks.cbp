@@ -28,32 +28,32 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="../../../!mcu/include/!mcu/UartProcessor_test.cpp" />
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/delay.c">
+		<Unit filename="../../../../!mcu/include/!mcu/UartProcessor_test.cpp" />
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/delay.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/delay.h" />
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/eeprom.c">
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/delay.h" />
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/eeprom.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/eeprom.h" />
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/i2c.c">
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/eeprom.h" />
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/i2c.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/i2c.h" />
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/spi.c">
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/i2c.h" />
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/spi.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/spi.h" />
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/stm8s.h" />
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/uart.c">
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/spi.h" />
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/stm8s.h" />
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/uart.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/uart.h" />
-		<Unit filename="src/FlatList.h" />
-		<Unit filename="src/UI.h" />
-		<Unit filename="src/_7SegmentsFont.h" />
-		<Unit filename="src/main.cpp" />
+		<Unit filename="../../../../!stm8/stm8-bare-min/stm8s/include/stm8-bare-min/uart.h" />
+		<Unit filename="../src/FlatList.h" />
+		<Unit filename="../src/UI.h" />
+		<Unit filename="../src/_7SegmentsFont.h" />
+		<Unit filename="../src/main.cpp" />
 		<Extensions>
 			<code_completion>
 				<search_path add="E:\p\!electronics\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min" />
