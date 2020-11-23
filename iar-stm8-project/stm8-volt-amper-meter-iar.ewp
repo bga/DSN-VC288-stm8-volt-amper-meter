@@ -252,7 +252,7 @@
                 </option>
                 <option>
                     <name>PreInclude</name>
-                    <state>$PROJ_DIR$\config.h</state>
+                    <state>$PROJ_DIR$\..\config.h</state>
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
@@ -1055,7 +1055,7 @@
                 </option>
                 <option>
                     <name>PreInclude</name>
-                    <state>$PROJ_DIR$\config.h</state>
+                    <state>$PROJ_DIR$\..\config.h</state>
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
@@ -1610,19 +1610,19 @@
     <group>
         <name>src</name>
         <file>
-            <name>$PROJ_DIR$\src\main.cpp</name>
+            <name>$PROJ_DIR$\..\src\main.cpp</name>
         </file>
     </group>
     <group>
         <name>stm8s-bare-min</name>
         <file>
-            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\delay.h</name>
+            <name>$PROJ_DIR$\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\delay.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\eeprom.h</name>
+            <name>$PROJ_DIR$\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\eeprom.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\stm8s.h</name>
+            <name>$PROJ_DIR$\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\stm8s.h</name>
         </file>
     </group>
 </project>
