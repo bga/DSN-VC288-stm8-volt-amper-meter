@@ -544,7 +544,7 @@
                 </option>
                 <option>
                     <name>IlinkOutputFile</name>
-                    <state>$PROJ_FNAME$.out</state>
+                    <state>app.out</state>
                 </option>
                 <option>
                     <name>IlinkDebugInfoEnable</name>
@@ -1347,7 +1347,7 @@
                 </option>
                 <option>
                     <name>IlinkOutputFile</name>
-                    <state>stm8-volt-amper-meter-iar.out</state>
+                    <state>app.out</state>
                 </option>
                 <option>
                     <name>IlinkDebugInfoEnable</name>
