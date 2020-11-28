@@ -29,6 +29,8 @@
 
 #include "_7SegmentsFont.h"
 
+using namespace Stm8Hal;
+
 enum { 
 	clockDivider = 1, 
 	ticksCountPerSAprox = 1600UL,
@@ -60,7 +62,7 @@ enum {
 	adcFetchSpeedPrescaler = 4,
 
 	//# display ADC - 1600Hz / 16 / 32 = ~3Hz 
-	adcDisplaySpeedPrescaler = 9,
+	// adcDisplaySpeedPrescaler = 9,
 };
 
 volatile GPIO_TypeDef* const digit2CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
@@ -351,6 +353,7 @@ struct Settings {
 	U16 voltageHysteresys;
 	U16 currentHysteresys;
 	U8 shift;
+	U16 displayUpdatePeriod;
 };
 
 EEMEM const Settings defaultSettings = {
@@ -360,6 +363,7 @@ EEMEM const Settings defaultSettings = {
 	.currentAdcFix = { .mul = U16_16SubShift_Shift(500), .add = U16_16SubShift_Shift(-5) }, 
 	.voltageHysteresys = 6, 
 	.currentHysteresys = 5, 
+	.displayUpdatePeriod = ticksCountPerSReal  / 3, 
 };
 Settings const& settings = ((Settings*)(&defaultSettings))[0];
 
@@ -367,6 +371,8 @@ RunningAvg<FU16[adcMaxBufferSize], FU32> voltageAdcRunningAvg;
 RunningAvg<FU16[adcMaxBufferSize], FU32> currentAdcRunningAvg;
 
 FU16 ticksCount = 0;
+FU16 displayTicksCount = 0;
+FU16 adcFetchIndex = 0;
 
 FU16 lastVoltageAvgValue = 0;
 FU16 lastCurrentAvgValue = 0x7FFF;
@@ -398,10 +404,10 @@ ISR(TIM4_ISR) {
 	#endif
 	
 	#if 1
-	if((ticksCount & bitsCountToMask(adcDisplaySpeedPrescaler - 1))) {
-	}
-	else {
-		if((ticksCount & bitsCountToMask(adcDisplaySpeedPrescaler))) {
+	if(settings.displayUpdatePeriod <= (displayTicksCount += 1) ) {
+		displayTicksCount = 0;
+		adcFetchIndex += 1;
+		if(adcFetchIndex & 1) {
 			FU16 avg = settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift));
 			if(abs(FI16(avg - lastVoltageAvgValue)) < settings.voltageHysteresys) {
 				
