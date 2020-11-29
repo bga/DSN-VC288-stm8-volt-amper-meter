@@ -256,7 +256,7 @@
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
-                    <state>E:\p\!electronics\!stm8\stm8-bare-min\stm8s\lib</state>
+                    <state>$_STM8_BARE_MIN_LIB_$\stm8s\lib</state>
                     <state>E:\p\!electronics\!mcu\include</state>
                     <state>E:\p\!cpp\include</state>
                 </option>
@@ -1616,13 +1616,16 @@
     <group>
         <name>stm8s-bare-min</name>
         <file>
-            <name>$PROJ_DIR$\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\delay.h</name>
+            <name>$_STM8_BARE_MIN_LIB_$\stm8s\lib\delay.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\eeprom.h</name>
+            <name>$_STM8_BARE_MIN_LIB_$\stm8s\lib\stm8-bare-min\eeprom.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\!stm8\stm8-bare-min\stm8s\include\stm8-bare-min\stm8s.h</name>
+            <name>$_STM8_BARE_MIN_LIB_$\stm8s\lib\eeprom.c</name>
+        </file>
+        <file>
+            <name>$_STM8_BARE_MIN_LIB_$\stm8s\lib\stm8s.h</name>
         </file>
     </group>
 </project>
