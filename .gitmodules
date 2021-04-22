@@ -1,0 +1,6 @@
+[submodule "lib/!cpp"]
+	path = lib/!cpp
+	url = https://github.com/bga/_cpp
+[submodule "lib/stm8-bare-min"]
+	path = lib/stm8-bare-min
+	url = https://github.com/bga/stm8-bare-min
