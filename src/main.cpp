@@ -287,7 +287,8 @@ void displayDecrimal6(FU16 x, FU8* dest) {
 
 //# 0 < x <= 999(9.99V) => x.xx V
 //# 1000(10.0V) <= x <= 9999(99.99V) => xx.x / 10 V
-//# 10000(100V) <= x <= 99999(999V) => xxx / 100 V
+//# 10000(100V) <= x <= 65534(655.34V) => xxx / 100 V
+//# 65535 == x => OL (handled externally)
 void displayVoltage(FU16 x, FU8* dest) {
 	const FU16 xVal = x;
 	forInc(int, i,  0, 2) (1000 <= x) && (divmod10(&x));
