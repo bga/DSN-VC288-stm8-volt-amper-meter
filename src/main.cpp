@@ -290,7 +290,7 @@ void displayDecrimal6(FU16 x, FU8* dest) {
 //# 10000(100V) <= x <= 99999(999V) => xxx / 100 V
 void displayVoltage(FU16 x, FU8* dest) {
 	const FU16 xVal = x;
-	(1000 <= xVal) && (divmod10(&x));
+	forInc(int, i,  0, 2) (1000 <= x) && (divmod10(&x));
 
 	forDec(int, i,  0, 3) {
 		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
