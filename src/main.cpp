@@ -41,8 +41,8 @@ enum {
 	ticksCountPerSReal = F_CPU / (1UL << clockDivider ) / (1UL << TIM4_prescaler) / TIM4_arr
 };
 
-static_assert(0 < TIM4_arr, "0 < TIM4_ARR");
-static_assert(TIM4_arr < 256, "TIM4_ARR < 256");
+static_assert_lt(0, TIM4_arr);
+static_assert_lte(TIM4_arr, 255);
 
 #define msToTicksCount(msArg) (ticksCountPerSReal * (msArg) / 1000UL)
 
