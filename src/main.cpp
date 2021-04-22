@@ -327,15 +327,24 @@ void display_fixLastDigit(FU16 x, FU8* dest, void (*display)(FU16 x, FU8* dest))
 
 //# 0 < x <= 999(999mA) => xxx mA
 //# 999(999mA) < x <= 9999(9.999A) => x.xx / 10 A
+//# 9999(9.999A) < x <= 65534(65.534A) => xx.x / 100 A
+//# 65535 == x => OL (handled externally)
 void displayCurrent(FU16 x, FU8* dest) {
 	const FU16 xVal = x;
-	(1000 <= xVal) && (divmod10(&x));
+	forInc(FU8, i, 0, 2) (1000 <= xVal) && (divmod10(&x));
 
 	forDec(int, i,  0, 3) {
 		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
 	}
 
-	(1000 <= xVal) && (dest[0] |= _7SegmentsFont::dot);
+	if(10000 <= xVal) {
+		dest[1] |= _7SegmentsFont::dot;
+	}
+	else if(1000 <= xVal) {
+		dest[0] |= _7SegmentsFont::dot;
+	}
+	else {
+	}
 }
 
 typedef U16 U16_16SubShift_Shift;
