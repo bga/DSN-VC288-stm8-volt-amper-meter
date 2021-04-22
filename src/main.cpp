@@ -36,9 +36,9 @@ enum {
 	ticksCountPerSAprox = 1600UL,
 	
 	TIM4_prescaler = 7,  
-	TIM4_arr = F_CPU / (1 << clockDivider ) / 2 / ((1 << TIM4_prescaler) - 1) / ticksCountPerSAprox,
-	
-	ticksCountPerSReal = F_CPU / (1 << clockDivider ) / 2 / ((1 << TIM4_prescaler) - 1) / TIM4_arr 
+	TIM4_arr = F_CPU / (1UL << clockDivider ) / (1UL << TIM4_prescaler) / ticksCountPerSAprox,
+
+	ticksCountPerSReal = F_CPU / (1UL << clockDivider ) / (1UL << TIM4_prescaler) / TIM4_arr
 };
 
 static_assert(0 < TIM4_arr, "0 < TIM4_ARR");
