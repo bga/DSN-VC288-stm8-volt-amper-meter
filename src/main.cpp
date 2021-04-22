@@ -32,7 +32,7 @@
 using namespace Stm8Hal;
 
 enum { 
-	clockDivider = 1, 
+	clockDivider = 0, 
 	ticksCountPerSAprox = 1600UL,
 	
 	TIM4_prescaler = 7,  
