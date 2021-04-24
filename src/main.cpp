@@ -109,10 +109,6 @@ enum {
 	currentAdcPortD = 2
 };
 
-template<typename TArg> TArg abs(const TArg& x) {
-	return (x < 0) ? -x : x;
-}
-
 #if 1
 FU16 divmod10(FU16* in) {
 	FU16 div = *in  / 10;
@@ -394,7 +390,7 @@ struct Measurer {
 		}
 		else {
 			FU16 avg = m_dataRunningAvg.computeAvg();
-			if(abs(FI16(avg - m_lastDataAvgValue)) < m_settingsPtr->hysteresys * get10Power(avg, 100)) {
+			if(Math_abs(FI16(avg - m_lastDataAvgValue)) < m_settingsPtr->hysteresys * get10Power(avg, 100)) {
 //				debug { displayDigit(666);  }
 //				displayDigit(666);
 			}
