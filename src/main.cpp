@@ -63,6 +63,7 @@ enum {
 
 	//# display ADC - 1600Hz / 16 / 32 = ~3Hz
 	// adcDisplaySpeedPrescaler = 9,
+	AdcUser_maxValue = 1000,
 };
 
 volatile GPIO_TypeDef* const digit2CathodeGpioPort = (GPIO_TypeDef*)PD_BASE_ADDRESS;
@@ -194,6 +195,13 @@ FU16 ADC_readSync(FU8 channelNo) {
 	return ADC_read();
 }
 
+Bool AdcUser_isOverflow(FU16 v) {
+	return AdcUser_maxValue <= v;
+}
+
+FU16 ADCUser_transformOverflow(FU16 v) {
+	return (AdcUser_isOverflow(v)) ? FU16(-1) : v;
+}
 
 struct Display {
 	FU8 displayChars[3 + 3];
@@ -289,6 +297,12 @@ struct Display {
 
 Display display;
 
+void displayOverflow(FU8* dest) {
+	dest[0] = 0;
+	dest[1] = _7SegmentsFont::d0;
+	dest[2] = _7SegmentsFont::L;
+}
+
 void displayDecrimal(FU16 x, FU8* dest) {
 	forDec(int, i,  0, 3) {
 		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
@@ -344,6 +358,7 @@ struct Measurer {
 
 	virtual FU16 adcRead() = 0;
 	virtual void displayDigit(FU16 x) = 0;
+	virtual void displayOverflow() = 0;
 
 	RunningAvg<FU16[adcMaxBufferSize], FU32> m_dataRunningAvg;
 	FU16 m_lastDataAvgValue;
@@ -356,22 +371,37 @@ struct Measurer {
 	}
 
 	void measureAdc(FU8 index) {
-		m_value = adcRead();
-		m_dataRunningAvg.add(m_value);
+		m_value = (m_settingsPtr->adcFix.isValid()) ? ADCUser_transformOverflow(adcRead()) : -1;
+		if(m_value != FU16(-1)) {
+			m_dataRunningAvg.add(m_value);
+		};
+	}
+	Bool isOverflow() const {
+		return m_value == -1;
 	}
 	FU16 getValue() const {
-		return m_dataRunningAvg.computeAvg();
+		if(isOverflow()) {
+			return -1;
+		}
+		else {
+			return m_dataRunningAvg.computeAvg();
+		}
 	}
 
 	void display() {
-		FU16 avg = m_dataRunningAvg.computeAvg();
-		if(abs(FI16(avg - m_lastDataAvgValue)) <= m_settingsPtr->hysteresys * get10Power(avg, 100)) {
-//				debug { displayDigit(666);  }
-//				displayDigit(666);
+		if(m_value == FU16(-1)) {
+			displayOverflow();
 		}
 		else {
-			m_lastDataAvgValue = avg;
-			displayDigit(avg);
+			FU16 avg = m_dataRunningAvg.computeAvg();
+			if(abs(FI16(avg - m_lastDataAvgValue)) < m_settingsPtr->hysteresys * get10Power(avg, 100)) {
+//				debug { displayDigit(666);  }
+//				displayDigit(666);
+			}
+			else {
+				m_lastDataAvgValue = avg;
+				displayDigit(avg);
+			}
 		}
 	}
 
@@ -408,6 +438,11 @@ struct VoltageMeasurer: User_Measurer {
 			dest[0] |= _7SegmentsFont::dot;
 		}
 	}
+
+	virtual void displayOverflow() {
+		::displayOverflow(&(::display.displayChars[display_displayChars_offset]));
+	};
+
 } voltageMeasurer /* = {
 	.m_settingsPtr = &(settings.voltageMeasurerSettings),
 	.m_lastDataAvgValue = 0,
@@ -441,6 +476,11 @@ struct CurrentMeasurer: User_Measurer {
 		else {
 		}
 	}
+
+	virtual void displayOverflow() {
+		::displayOverflow(&(::display.displayChars[display_displayChars_offset]));
+	};
+
 } currentMeasurer /* = {
 	.m_settingsPtr = &(settings.voltageMeasurerSettings),
 	.m_lastDataAvgValue = 0,
