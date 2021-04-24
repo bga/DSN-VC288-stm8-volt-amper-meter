@@ -355,7 +355,7 @@ struct Measurer {
 
 	void display() {
 		FU16 avg = m_dataRunningAvg.computeAvg();
-		if(abs(FI16(avg - m_lastDataAvgValue)) < m_settingsPtr->hysteresys) {
+		if(abs(FI16(avg - m_lastDataAvgValue)) <= m_settingsPtr->hysteresys) {
 //				debug { displayDigit(666);  }
 //				displayDigit(666);
 		}
