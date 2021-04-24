@@ -31,11 +31,11 @@
 
 using namespace Stm8Hal;
 
-enum { 
-	clockDivider = 0, 
+enum {
+	clockDivider = 0,
 	ticksCountPerSAprox = 1600UL,
-	
-	TIM4_prescaler = 7,  
+
+	TIM4_prescaler = 7,
 	TIM4_arr = F_CPU / (1UL << clockDivider ) / (1UL << TIM4_prescaler) / ticksCountPerSAprox,
 
 	ticksCountPerSReal = F_CPU / (1UL << clockDivider ) / (1UL << TIM4_prescaler) / TIM4_arr
@@ -57,11 +57,11 @@ void Timer_init() {
 
 enum { adcMaxBufferSize = 32 };
 
-enum { 
-	//# fetch ADC - 1600Hz / 16 = 100Hz 
+enum {
+	//# fetch ADC - 1600Hz / 16 = 100Hz
 	adcFetchSpeedPrescaler = 4,
 
-	//# display ADC - 1600Hz / 16 / 32 = ~3Hz 
+	//# display ADC - 1600Hz / 16 / 32 = ~3Hz
 	// adcDisplaySpeedPrescaler = 9,
 };
 
@@ -178,6 +178,12 @@ FU16 ADC_read() {
 	return (adcL | (adcH << 8));
 }
 
+FU16 ADC_readSync(FU8 channelNo) {
+	ADC_setChannel(channelNo);
+	ADC_readStart();
+	return ADC_read();
+}
+
 
 struct Display {
 	FU8 displayChars[3 + 3];
@@ -285,29 +291,6 @@ void displayDecrimal6(FU16 x, FU8* dest) {
 	}
 }
 
-//# 0 < x <= 999(9.99V) => x.xx V
-//# 1000(10.0V) <= x <= 9999(99.99V) => xx.x / 10 V
-//# 10000(100V) <= x <= 65534(655.34V) => xxx / 100 V
-//# 65535 == x => OL (handled externally)
-void displayVoltage(FU16 x, FU8* dest) {
-	const FU16 xVal = x;
-	forInc(int, i,  0, 2) (1000 <= x) && (divmod10(&x));
-
-	forDec(int, i,  0, 3) {
-		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
-	}
-
-	if(10000 <= xVal) {
-		
-	}
-	else if(1000 <= xVal) {
-		dest[1] |= _7SegmentsFont::dot;
-	}
-	else {
-		dest[0] |= _7SegmentsFont::dot;
-	}
-}
-
 void display_fixLastDigit(FU16 x, FU8* dest, void (*display)(FU16 x, FU8* dest)) {
 	//# small value
 	if(1000 <= x) {
@@ -316,7 +299,7 @@ void display_fixLastDigit(FU16 x, FU8* dest, void (*display)(FU16 x, FU8* dest))
 	else {
 		FU8 newDigits[3];
 		display(x, newDigits);
-		//# prevent display last digit small changes (ADC error) 
+		//# prevent display last digit small changes (ADC error)
 		if(newDigits[0] == dest[0] && newDigits[1] == dest[1]) {
 			//# keep old digits
 		}
@@ -326,66 +309,162 @@ void display_fixLastDigit(FU16 x, FU8* dest, void (*display)(FU16 x, FU8* dest))
 	}
 }
 
-//# 0 < x <= 999(999mA) => xxx mA
-//# 999(999mA) < x <= 9999(9.999A) => x.xx / 10 A
-//# 9999(9.999A) < x <= 65534(65.534A) => xx.x / 100 A
-//# 65535 == x => OL (handled externally)
-void displayCurrent(FU16 x, FU8* dest) {
-	const FU16 xVal = x;
-	forInc(FU8, i, 0, 2) (1000 <= xVal) && (divmod10(&x));
-
-	forDec(int, i,  0, 3) {
-		dest[i] = _7SegmentsFont::digits[divmod10(&x)];
-	}
-
-	if(10000 <= xVal) {
-		dest[1] |= _7SegmentsFont::dot;
-	}
-	else if(1000 <= xVal) {
-		dest[0] |= _7SegmentsFont::dot;
-	}
-	else {
-	}
-}
-
 typedef U16 U16_16SubShift_Shift;
-struct Settings {
+
+struct Measurer {
 	struct AdcUserFix {
 		U16_16SubShift_Shift mul;
-		U16_16SubShift_Shift add;
-		FU16 fix(FU16 v, FU8 shift) const {
-			return (FU32(v + this->add) * this->mul) >> shift;
+		I8 add;
+		struct {
+			U8 dummy: 3;
+			U8 shift: 5;
+		};
+		Bool isValid() const {
+			return mul != 0xFFFF && mul != 0;
+		}
+		FU16 fix(FU16 v) const {
+			return (FU32(v + this->add) * this->mul) >> this->shift;
 		}
 	};
 
-	AdcUserFix voltageAdcFix;
-	AdcUserFix currentAdcFix;
-	U16 voltageHysteresys;
-	U16 currentHysteresys;
-	U8 shift;
+	struct Settings {
+		U16 hysteresys;
+		AdcUserFix adcFix;
+	};
+
+	virtual FU16 adcRead() = 0;
+	virtual void displayDigit(FU16 x) = 0;
+
+	RunningAvg<FU16[adcMaxBufferSize], FU32> m_dataRunningAvg;
+	FU16 m_lastDataAvgValue;
+	FU16 m_value;
+
+	Settings const* m_settingsPtr;
+
+	Measurer() {
+		m_lastDataAvgValue = FU16(-1) / 2;
+	}
+
+	void measureAdc(FU8 index) {
+		m_value = adcRead();
+		m_dataRunningAvg.add(m_value);
+	}
+	FU16 getValue() const {
+		return m_dataRunningAvg.computeAvg();
+	}
+
+	void display() {
+		FU16 avg = m_dataRunningAvg.computeAvg();
+		if(abs(FI16(avg - m_lastDataAvgValue)) < m_settingsPtr->hysteresys) {
+//				debug { displayDigit(666);  }
+//				displayDigit(666);
+		}
+		else {
+			m_lastDataAvgValue = avg;
+			displayDigit(avg);
+		}
+	}
+
+};
+
+typedef Measurer User_Measurer;
+
+struct VoltageMeasurer: User_Measurer {
+	virtual FU16 adcRead() override {
+		return ADC_readSync(voltageAdcChannelNo);
+	}
+
+	enum { display_displayChars_offset = 0 };
+	//# 0 < x <= 999(9.99V) => x.xx V
+	//# 1000(10.0V) <= x <= 9999(99.99V) => xx.x / 10 V
+	//# 10000(100V) <= x <= 65534(655.34V) => xxx / 100 V
+	//# 65535 == x => OL (handled externally)
+	virtual void displayDigit(FU16 x) {
+		FU8* dest = &(::display.displayChars[display_displayChars_offset]);
+		const FU16 xVal = x;
+		forInc(int, i,  0, 2) (1000 <= x) && (divmod10(&x));
+
+		forDec(int, i,  0, 3) {
+			dest[i] = _7SegmentsFont::digits[divmod10(&x)];
+		}
+
+		if(10000 <= xVal) {
+
+		}
+		else if(1000 <= xVal) {
+			dest[1] |= _7SegmentsFont::dot;
+		}
+		else {
+			dest[0] |= _7SegmentsFont::dot;
+		}
+	}
+} voltageMeasurer /* = {
+	.m_settingsPtr = &(settings.voltageMeasurerSettings),
+	.m_lastDataAvgValue = 0,
+} */;
+
+struct CurrentMeasurer: User_Measurer {
+	virtual FU16 adcRead() override {
+		return ADC_readSync(currentAdcChannelNo);
+	}
+
+	enum { display_displayChars_offset = 3 };
+	//# 0 < x <= 999(999mA) => xxx mA
+	//# 999(999mA) < x <= 9999(9.999A) => x.xx / 10 A
+	//# 9999(9.999A) < x <= 65534(65.534A) => xx.x / 100 A
+	//# 65535 == x => OL (handled externally)
+	void displayDigit(FU16 x) {
+		FU8* dest = &(::display.displayChars[display_displayChars_offset]);
+		const FU16 xVal = x;
+		forInc(FU8, i, 0, 2) (1000 <= xVal) && (divmod10(&x));
+
+		forDec(int, i,  0, 3) {
+			dest[i] = _7SegmentsFont::digits[divmod10(&x)];
+		}
+
+		if(10000 <= xVal) {
+			dest[1] |= _7SegmentsFont::dot;
+		}
+		else if(1000 <= xVal) {
+			dest[0] |= _7SegmentsFont::dot;
+		}
+		else {
+		}
+	}
+} currentMeasurer /* = {
+	.m_settingsPtr = &(settings.voltageMeasurerSettings),
+	.m_lastDataAvgValue = 0,
+} */;
+
+
+struct Settings {
+	User_Measurer::Settings voltageMeasurerSettings;
+	User_Measurer::Settings currentMeasurerSettings;
+
 	U16 displayUpdatePeriod;
 };
 
 EEMEM const Settings defaultSettings = {
-	.shift = 10,
-//	.voltageAdcFix = { .mul = U16_16SubShift_Shift(1 << (16 - 4)), .add = 1 },
-	.voltageAdcFix = { .mul = U16_16SubShift_Shift(1550), .add = 0 },
-	.currentAdcFix = { .mul = U16_16SubShift_Shift(500), .add = U16_16SubShift_Shift(-5) }, 
-	.voltageHysteresys = 6, 
-	.currentHysteresys = 5, 
-	.displayUpdatePeriod = ticksCountPerSReal  / 3, 
+	.voltageMeasurerSettings = {
+		.adcFix = { .mul = U16_16SubShift_Shift(1550), .add = 0, .shift = 10 },
+		.hysteresys = 6,
+	},
+	.currentMeasurerSettings = {
+		.adcFix = { .mul = U16_16SubShift_Shift(500), .add = -5, .shift = 10 },
+		.hysteresys = 5,
+	},
+	.displayUpdatePeriod = ticksCountPerSReal  / 3,
 };
 Settings const& settings = ((Settings*)(&defaultSettings))[0];
 
-RunningAvg<FU16[adcMaxBufferSize], FU32> voltageAdcRunningAvg;
-RunningAvg<FU16[adcMaxBufferSize], FU32> currentAdcRunningAvg;
+run {
+	voltageMeasurer.m_settingsPtr = &(settings.voltageMeasurerSettings);
+	currentMeasurer.m_settingsPtr = &(settings.currentMeasurerSettings);
+}
 
 FU16 ticksCount = 0;
 FU16 displayTicksCount = 0;
 FU16 adcFetchIndex = 0;
-
-FU16 lastVoltageAvgValue = 0;
-FU16 lastCurrentAvgValue = 0x7FFF;
 
 ISR(TIM4_ISR) {
 	clearBit(TIM4_SR, TIM4_SR_UIF);
@@ -399,44 +478,23 @@ ISR(TIM4_ISR) {
 	}
 	else {
 		if((ticksCount & bitsCountToMask(adcFetchSpeedPrescaler))) {
-			ADC_setChannel(voltageAdcChannelNo);
-			ADC_readStart();
-			FU16 voltageAdcValue = ADC_read();
-			voltageAdcRunningAvg.add(voltageAdcValue);
+			voltageMeasurer.measureAdc(0);
 		}
 		else {
-			ADC_setChannel(currentAdcChannelNo);
-			ADC_readStart();
-			FU16 currentAdcValue = ADC_read();
-			currentAdcRunningAvg.add(currentAdcValue);
+			currentMeasurer.measureAdc(0);
 		}
 	}
 	#endif
-	
+
 	#if 1
 	if(settings.displayUpdatePeriod <= (displayTicksCount += 1) ) {
 		displayTicksCount = 0;
 		adcFetchIndex += 1;
 		if(adcFetchIndex & 1) {
-			FU16 avg = settings.voltageAdcFix.fix(voltageAdcRunningAvg.computeAvg(), FU8(settings.shift));
-			if(abs(FI16(avg - lastVoltageAvgValue)) < settings.voltageHysteresys) {
-				
-			}
-			else {
-				lastVoltageAvgValue = avg;
-				displayVoltage(avg, &(display.displayChars[0]));
-			}
+			voltageMeasurer.display();
 		}
 		else {
-			FU16 avg = settings.currentAdcFix.fix(currentAdcRunningAvg.computeAvg(), FU8(settings.shift));
-			if(abs(FI16(avg - lastCurrentAvgValue)) < settings.currentHysteresys) {
-				
-			}
-			else {
-				lastCurrentAvgValue = avg;
-				displayCurrent(avg, &(display.displayChars[3]));
-				// display_fixLastDigit(avg, &(display.displayChars[3]), displayVoltage);
-			}
+			currentMeasurer.display();
 		}
 	}
 	#endif
@@ -447,13 +505,13 @@ void Clock_setCpuFullSpeed() {
 }
 
 void Hw_enable() {
-	enum { 
-		CLK_PCKENR1_TIM4 = 4 
+	enum {
+		CLK_PCKENR1_TIM4 = 4
 	};
 	CLK_PCKENR1 = _BV(CLK_PCKENR1_TIM4);
-	
-	enum { 
-		CLK_PCKENR12_ADC = 3 
+
+	enum {
+		CLK_PCKENR12_ADC = 3
 	};
 	CLK_PCKENR2 = _BV(CLK_PCKENR12_ADC);
 }
