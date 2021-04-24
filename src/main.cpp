@@ -142,6 +142,16 @@ FU16 divmod10(FU16& in) {
 }
 #endif // 1
 
+FU16 get10Power(FU16 x, FU16 max) {
+	FU16 ret = 1;
+	while(ret <= max && 1000 <= x) {
+		x /= 10;
+		ret *= 10;
+	}
+
+	return ret;
+}
+
 void ADC_init() {
 	/* right-align data */
 	setBit(ADC1_CR2, ADC1_CR2_ALIGN);
@@ -355,7 +365,7 @@ struct Measurer {
 
 	void display() {
 		FU16 avg = m_dataRunningAvg.computeAvg();
-		if(abs(FI16(avg - m_lastDataAvgValue)) <= m_settingsPtr->hysteresys) {
+		if(abs(FI16(avg - m_lastDataAvgValue)) <= m_settingsPtr->hysteresys * get10Power(avg, 100)) {
 //				debug { displayDigit(666);  }
 //				displayDigit(666);
 		}
