@@ -537,7 +537,7 @@ ISR(TIM4_ISR) {
 	#endif
 
 	#if 1
-	if(settings.displayUpdatePeriod <= (displayTicksCount += 1) ) {
+	if(settings.displayUpdatePeriod <= (displayTicksCount += 2) ) {
 		displayTicksCount = 0;
 		adcFetchIndex += 1;
 		if(adcFetchIndex & 1) {
