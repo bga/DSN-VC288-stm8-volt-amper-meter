@@ -503,7 +503,7 @@ EEMEM const Settings defaultSettings = {
 };
 Settings const& settings = ((Settings*)(&defaultSettings))[0];
 
-run {
+BGA__RUN {
 	voltageMeasurer.m_settingsPtr = &(settings.voltageMeasurerSettings);
 	currentMeasurer.m_settingsPtr = &(settings.currentMeasurerSettings);
 }
