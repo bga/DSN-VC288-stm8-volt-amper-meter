@@ -35,11 +35,15 @@ size: $(TARGET)-flash.bin
 
 flash-write: $(TARGET)-flash.bin
 	stm8flash -c stlinkv2 -s flash -p $(MCU) -w $<
+flash-write: $(TARGET)-flash.bin
+	stm8flash -c stlinkv2 -s flash -p $(MCU) -v $<
 flash-read: $(TARGET)-flash.bin
 	stm8flash -c stlinkv2 -s flash -p $(MCU) -r $<
 
 eeprom-write: $(TARGET)-eeprom.bin
 	stm8flash -c stlinkv2 -s eeprom -p $(MCU) -w $<
+eeprom-read: $(TARGET)-eeprom.bin
+	stm8flash -c stlinkv2 -s eeprom -p $(MCU) -v $<
 eeprom-read: $(TARGET)-eeprom.bin
 	stm8flash -c stlinkv2 -s eeprom -p $(MCU) -r $<
 
